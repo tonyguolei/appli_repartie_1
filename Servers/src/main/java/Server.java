@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Server {
-
     //les parametres d'user
     private ServerSocket server;
     private int sId;
