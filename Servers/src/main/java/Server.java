@@ -11,81 +11,77 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Server {
-    //les parametres d'user
-    private ServerSocket server;
+    //les parametres du server
+    private ServerSocket serverSocket;
     private int sId;
-    private List<User> UsersWait = new ArrayList<User>();
-    private List<User> UsersPlay = new ArrayList<User>();
+/*    private List<User> UsersWait = new ArrayList<User>();
+    private List<User> UsersPlay = new ArrayList<User>();*/
     private int neighborServer;
+    //TODO add liste db
 
-    //TODO liste db
-
-    public Server(int sId, int port) {
+    //le consctructeur
+    public Server(int sId){
         this.sId = sId;
+    }
 
+    //les methodes du server
+    public void createServer(int port){
         try {
-            createSocketServer(port);
+                this.serverSocket = new ServerSocket(port);
+                System.out.println("Server " + this.sId + " is started...");
+            while (true) {
+                Socket userSocket = serverSocket.accept();
+                Server.handleUser(userSocket);
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+                e.printStackTrace();
         }
     }
 
-    public ServerSocket getServer() {
-        return server;
-    }
-
-    public void setServer(ServerSocket server) {
-        this.server = server;
-    }
-
-    private void createSocketServer(int port) throws IOException {
-
-        setServer(new ServerSocket(port));
-
-        while (true) {
-            Socket socket = server.accept();
-            handleUser(socket);
-        }
-    }
-
-    private void handleUser(final Socket user) throws IOException {
+    private static void handleUser(final Socket userSocket){
         new Thread(new Runnable() {
             public void run() {
-                BufferedReader in = null;
-                PrintWriter out = null;
+                BufferedReader in;
+                PrintWriter out;
                 try {
-                    in = new BufferedReader(new InputStreamReader(user.getInputStream()));
-                    out = new PrintWriter(user.getOutputStream());
+                    in = new BufferedReader(new InputStreamReader(userSocket.getInputStream()));
+                    out = new PrintWriter(userSocket.getOutputStream());
 
-                    while (in != null && out != null) {
+                    while (true) {
+                        //event du client recu par server
+                        String event = in.readLine();
+                        //message du client recu par server
                         String msg = in.readLine();
-                        System.out.println(msg);
-                        out.println("Server received " + msg);
                         out.flush();
-                        if (msg.equals("bye")) {
-                            break;
+
+                        switch(event){
+                            case "CONNECT":
+                                //TODO cree un instance User, ajoute nouveau user dans la liste
+                                System.out.println("User " + msg + " connected");
+                                out.println("CONNECTED");
+                                out.flush();
+                                break;
+                            case "DISCONNECT":
+                                System.out.print("User disconnected");
+                                userSocket.close();
+                                break;
+                            case "MESSAGE":
+                                //TODO traiter le message
+                                System.out.println("MESSAGE: " + msg);
+                            default:
+                                break;
                         }
                     }
                 } catch(IOException ex) {
                     //ex.printStackTrace();
                     //Todo envelever l'utilisateur quand il est disconnected
-                    System.out.print("User disconnected");
-                } finally {
-                    try {
-                        in.close();
-                    } catch (Exception e) {}
-                    try {
-                        out.close();
-                    } catch (Exception e) {}
-                    try {
-                        user.close();
-                    } catch (Exception e) {}
                 }
             }
         }).start();
     }
 
     public static void main(String[] args) {
-            new Server(Integer.parseInt(args[0]), 10000);
+        Server server = new Server(Integer.parseInt(args[0]));
+        server.createServer(15000);
     }
 }
