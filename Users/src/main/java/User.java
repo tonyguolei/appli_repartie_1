@@ -64,7 +64,9 @@ public class User {
                     break;
                 }else {
                     // sinon, c'est le message pour communiquer avec serveur
+                    //C'est l'event
                     out.println("MESSAGE");
+                    //c'est le message envoye
                     out.println(msg);
                     out.flush();
                 }
