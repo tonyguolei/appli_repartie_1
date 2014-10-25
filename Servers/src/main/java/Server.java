@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Server {
+
+
     //les parametres du server
     private ServerSocket serverSocket;
     private int sId;
