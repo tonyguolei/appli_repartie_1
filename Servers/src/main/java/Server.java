@@ -28,6 +28,7 @@ public class Server {
     public void createServer(int port){
         try {
                 this.serverSocket = new ServerSocket(port);
+                System.out.println("Ici test");
                 System.out.println("Server " + this.sId + " is started...");
             while (true) {
                 Socket userSocket = serverSocket.accept();
