@@ -3,7 +3,7 @@ import java.net.Socket;
 /**
  * Created by tonyguolei on 10/20/2014.
  */
-enum Status { WAIT, PLAY, DISCONNECT };
+enum Status { WAIT, PLAY, CONNECTED, DISCONNECT };
 
 public class User {
     //les parametres d'user

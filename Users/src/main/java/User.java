@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Scanner;
 
 
 public class User {
@@ -21,54 +22,45 @@ public class User {
     public String createPseudo() {
         String pseudo;
         String pseudo_vefify;
-        try{
-            do{
-                System.out.println("Enter your pseudo: ");
-                pseudo = (new BufferedReader(new InputStreamReader(System.in))).readLine();
-                System.out.println("Enter your pseudo once more: ");
-                pseudo_vefify = (new BufferedReader(new InputStreamReader(System.in))).readLine();
-            }while(!pseudo.equals(pseudo_vefify));
-            return pseudo;
-        }catch(IOException ex){
-            ex.printStackTrace();
-            return "";
-        }
+        Scanner reader = new Scanner(System.in);
+        do{
+            System.out.println("Enter your pseudo: ");
+            pseudo = reader.nextLine();
+            System.out.println("Enter your pseudo once more: ");
+            pseudo_vefify = reader.nextLine();
+        }while(!pseudo.equals(pseudo_vefify));
+        return pseudo;
     }
 
     public void connectServer(String addressServer, int port){
+        String ackServer;
         try {
             this.socket = new Socket(addressServer, port);
             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter out = new PrintWriter(socket.getOutputStream());
-            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-            //C'est l'event
-            out.println("CONNECT");
-            //c'est le message envoye
-            out.println(this.pseudo);
+            //Envoyer le pseudo pour connecter le serveur
+            out.println("C:" + this.pseudo + ":CONNECT:" + "");
             out.flush();
 
-            if(in.readLine() == "CONNECTED"){
-                System.out.println("Connected to server");
+            //Recuper ACK de serveur pour confirmer la connection
+            ackServer = in.readLine();
+            if (ackServer.equals("CONNECTED")) {
+                System.out.println("Tu es connecté au server");
             }
 
             while (true) {
-                String msg = reader.readLine();
+                Scanner reader = new Scanner(System.in);
+                String msg = reader.nextLine();
 
-                //si user tape "quit", il deconnected
+                //si user tape "quit", il deconnecte
                 if (msg.equals("quit")) {
-                    //C'est l'event
-                    out.println("DISCONNECT");
-                    //c'est le message envoye
-                    out.println(msg);
+                    out.println("C:" + this.pseudo + ":DISCONNECT:" + "");
                     out.flush();
                     break;
                 }else {
-                    // sinon, c'est le message pour communiquer avec serveur
-                    //C'est l'event
-                    out.println("MESSAGE");
-                    //c'est le message envoye
-                    out.println(msg);
+                    // sinon, c'est le message pour communiquer avec le serveur
+                    out.println("C:" + this.pseudo + ":MESSAGE:" + msg);
                     out.flush();
                 }
             }
@@ -98,6 +90,6 @@ public class User {
     public static void main(String[] args) throws Exception {
         User user = new User();
         user.setPseudo(user.createPseudo());
-        user.connectServer("localhost", 15000);
+        user.connectServer("localhost", 10001);
     }
 }

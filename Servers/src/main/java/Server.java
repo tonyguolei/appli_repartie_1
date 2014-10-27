@@ -354,29 +354,23 @@ sinon le substring direct pourrait faire l'affaire
                     out = new PrintWriter(userSocket.getOutputStream());
 
                     while (true) {
-
                         String msg = in.readLine();
-
-                       /* if (msg.equals("bye")) {
-                       break;
-                       }*/
-                       /*
-                       Distinction du client d'un serveur
-                       Les messages des Clients commencent toujours par C
-                       Les messages des Serveurs commencent toujours par S
-                     Format des messages
-                       Source : Adresse : port : MessageContent
-                       Source = C ou S
-                       Adresse : IP du serveur ou * pseudo du client *
-                       Port : Port du serveur ou vide pour le client
-                       MessageContent  = "Contenu du message du client ou d'un serveur
-
-                       */
-
                         // Recuperation de l'entete du message
 
                         SplitServerMessage = msg.split(":",4);
                         if(SplitServerMessage[0].equals("S")){
+
+                       /*
+                       Distinction du client d'un serveur
+                       Les messages des Serveurs commencent toujours par S
+                       Format des messages
+                       Source : Adresse : port : MessageContent
+                       Source = S
+                       Adresse : IP du serveur
+                       Port : Port du serveur
+                       MessageContent  = "Contenu du message d'un serveur
+                       */
+
                             //SplitServerMessage[3] contient le type du message
                             switch(SplitServerMessage[3]){
 
@@ -386,7 +380,6 @@ sinon le substring direct pourrait faire l'affaire
                                     out.flush();
                                     break;
                                 case "DEAD":
-
                                     System. out.println(msg);
                                     // mise a jour des serveurs disponible
 
@@ -428,18 +421,21 @@ sinon le substring direct pourrait faire l'affaire
                                 default:
                                     break;
                             }
-
-
                         }else {
-                            // traitement du message commencant par Event ( Guo Lei)
-                            System.out.println("Client simple");
-                            String event  = in.readLine();
-                            switch(event){
-
-
+                           /*
+                           Distinction du client d'un serveur
+                           Les messages des Serveurs commencent toujours par C
+                           Format des messages
+                           Source : Pseudo : TypeMessage : MessageContent
+                           Source = C
+                           Pseudo : Pseudo du client
+                           TypeMessage : Type de message du client
+                           MessageContent  = "Contenu du message d'un serveur
+                           */
+                            switch (SplitServerMessage[2]) {
                                 case "CONNECT":
                                     //TODO cree un instance User, ajoute nouveau user dans la liste
-                                    System.out.println("User " + msg + " connected");
+                                    System.out.println("Client " + SplitServerMessage[1] + " est conntecté");
                                     out.println("CONNECTED");
                                     out.flush();
                                     break;
@@ -449,27 +445,20 @@ sinon le substring direct pourrait faire l'affaire
                                     break;
                                 case "MESSAGE":
                                     //TODO traiter le message
-                                    System.out.println("MESSAGE: " + msg);
+                                    System.out.println("MESSAGE: " + SplitServerMessage[3]);
                                 default:
                                     break;
                             }
                         }
-
-
-
                     }
                 } catch(IOException ex) {
                     //ex.printStackTrace();
-                    //Todo envelever l'utilisateur quand il est disconnected
                 }
             }
         }).start();
     }
 
     public static void main(String[] args) {
-        //Server server = new Server(Integer.parseInt(args[0]));
-        //server.createServer(15000);
-
         Scanner scan = new Scanner(System.in);
         String ServerNumber ;
 
