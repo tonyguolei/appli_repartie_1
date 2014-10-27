@@ -7,27 +7,29 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
-
 public class User {
 
-    // les paremetres d'user
     private String pseudo;
     private Socket socket;
 
-    //constructeur
+    /**
+     *
+     */
     public User(){}
 
-    //les methodes de'User
+    /**
+     *
+     * @return
+     */
     public String createPseudo() {
-        String pseudo;
-        String pseudo_vefify;
+        String pseudo,pseudo_verify;
         try{
             do{
                 System.out.println("Enter your pseudo: ");
                 pseudo = (new BufferedReader(new InputStreamReader(System.in))).readLine();
                 System.out.println("Enter your pseudo once more: ");
-                pseudo_vefify = (new BufferedReader(new InputStreamReader(System.in))).readLine();
-            }while(!pseudo.equals(pseudo_vefify));
+                pseudo_verify = (new BufferedReader(new InputStreamReader(System.in))).readLine();
+            }while(!pseudo.equals(pseudo_verify));
             return pseudo;
         }catch(IOException ex){
             ex.printStackTrace();
@@ -35,6 +37,11 @@ public class User {
         }
     }
 
+    /**
+     *
+     * @param addressServer
+     * @param port
+     */
     public void connectServer(String addressServer, int port){
         try {
             this.socket = new Socket(addressServer, port);
@@ -78,22 +85,37 @@ public class User {
         }
     }
 
+    /**
+     *
+     * @return
+     */
     public String getPseudo() {
         return pseudo;
     }
 
+    /**
+     *
+     * @param pseudo
+     */
     public void setPseudo(String pseudo) {
         this.pseudo = pseudo;
     }
 
+    /**
+     *
+     * @return
+     */
     public Socket getSocket() {
         return socket;
     }
 
+    /**
+     *
+     * @param socket
+     */
     public void setSocket(Socket socket) {
         this.socket = socket;
     }
-
 
     public static void main(String[] args) throws Exception {
         User user = new User();
