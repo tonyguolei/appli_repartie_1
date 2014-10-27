@@ -16,9 +16,10 @@ public class Server {
 
     private ServerSocket serverSocket;
     private int sId;
-/*    private List<User> UsersWait = new ArrayList<User>();
-    private List<User> UsersPlay = new ArrayList<User>();*/
-    // private int neighborServer;
+    private List<User> usersConnectedList = new ArrayList<User>();
+    private List<User> usersWaitList = new ArrayList<User>();
+    private List<User> usersPlayList = new ArrayList<User>();
+    private List<Game> gamesList = new ArrayList<Game>();
 
     private static BufferedReader inClient ;
     private  static PrintWriter  outClient ;
@@ -463,7 +464,6 @@ public class Server {
                                     //retransmet le message a son voisin et fais la mise à jour
                                     break;
                                 case "MASTERDEAD":
-                                    //TODO traiter le message
                                     System.out.println("MESSAGE: " + msg);
                                 default:
                                     break;
@@ -479,21 +479,44 @@ public class Server {
                            TypeMessage : Type de message du client
                            MessageContent  = "Contenu du message d'un serveur
                            */
-
                             switch (SplitServerMessage[2]) {
                                 case "CONNECT":
-                                    //TODO cree un instance User, ajoute nouveau user dans la liste
                                     System.out.println("Client " + SplitServerMessage[1] + " est conntecté");
+
+                                    //adjoute dans la liste connected
+                                    addUserToList(new User(SplitServerMessage[1], userSocket, Status.CONNECTED), usersConnectedList);
+
+                                    //envoyer ack au client
                                     out.println("CONNECTED");
                                     out.flush();
                                     break;
                                 case "DISCONNECT":
-                                    System.out.print("User disconnected");
+                                    System.out.print("Client est déconnecté");
                                     userSocket.close();
                                     break;
+                                case "PLAY":
+                                    if(usersWaitList.isEmpty()){
+                                        //s'il n'y a pas d'autre client qui attend, le client doit attendre un client
+                                        out.println("Vous etre en train d'attendre autre joueur");
+                                        out.flush();
+                                        User user1 = findUserFromList(SplitServerMessage[1], usersConnectedList);
+                                        removeUserFromList(user1, usersConnectedList);
+                                        addUserToList(user1, usersWaitList);
+                                    }else{
+                                        //s'il y a un client attendu, ils peuvent jouer le jeu
+                                        User user1 = findUserFromList(SplitServerMessage[1], usersWaitList);
+                                        removeUserFromList(user1, usersWaitList);
+                                        addUserToList(user1, usersPlayList);
+                                        User user2 = findUserFromList(SplitServerMessage[1], usersConnectedList);
+                                        removeUserFromList(user2, usersConnectedList);
+                                        addUserToList(user2, usersPlayList);
+                                    }
+                                    break;
                                 case "MESSAGE":
-                                    //TODO traiter le message
                                     System.out.println("MESSAGE: " + SplitServerMessage[3]);
+                                    //envoyer ack au client
+                                    out.println("MESSAGE RECIEVED: " + SplitServerMessage[3]);
+                                    out.flush();
                                 default:
                                     break;
                             }
@@ -505,6 +528,83 @@ public class Server {
                 }
             }
         }).start();
+    }
+
+    /**
+     *
+     * @param user
+     * @param list
+     */
+    private void addUserToList(User user, List<User> list){
+        list.add(user);
+        if(list == usersConnectedList){
+            user.setStatus(Status.CONNECTED);
+        }else if(list == usersWaitList){
+            user.setStatus(Status.WAIT);
+        }else if(list == usersPlayList){
+            user.setStatus(Status.PLAY);
+        }
+    }
+
+    /**
+     *
+     * @param user
+     * @param list
+     */
+    private void removeUserFromList(User user, List<User> list){
+        list.remove(user);
+    }
+
+    /**
+     *
+     * @param pseudo
+     * @param list
+     * @return
+     */
+    private User findUserFromList(String pseudo, List<User> list){
+        for (User user: list) {
+            if(user.getPseudo().equals(pseudo)){
+                return user;
+            }
+        }
+        return null;
+    }
+
+    /**
+     *
+     * @param game
+     * @param list
+     */
+    private void addGameToPlayList(Game game, List<Game> list){
+        list.remove(game);
+    }
+
+    /**
+     *
+     * @param game
+     * @param list
+     */
+    private void removeGameFromPlayList(Game game, List<Game> list){
+        list.add(game);
+    }
+
+    /**
+     *
+     * @param pseudo
+     * @param list
+     * @return
+     */
+    private Game findGameFromList(String pseudo, List<Game> list){
+        for (Game game: list) {
+            if(game.getUser1().getPseudo().equals(pseudo)){
+                return game;
+            }
+
+            if(game.getUser2().getPseudo().equals(pseudo)){
+                return game;
+            }
+        }
+        return null;
     }
 
     public static void main(String[] args) {

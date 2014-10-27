@@ -14,8 +14,10 @@ public class User {
      * Crée un utilisateur
      * @param pseudo
      */
-    public User(String pseudo) {
+    public User(String pseudo, Socket socket, Status status) {
         this.pseudo = pseudo;
+        this.socket = socket;
+        this.status = status;
     }
 
     /**

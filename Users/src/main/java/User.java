@@ -61,16 +61,24 @@ public class User {
                 Scanner reader = new Scanner(System.in);
                 String msg = reader.nextLine();
 
-                //si user tape "quit", il deconnecte
                 if (msg.equals("quit")) {
+                    //si user tape "quit", il va deconnecter
                     out.println("C:" + this.pseudo + ":DISCONNECT:" + "");
                     out.flush();
                     break;
-                }else {
-                    // sinon, c'est le message pour communiquer avec le serveur
+                }else if (msg.equals("play")){
+                    //si user tape "play", il va jouer le jeu
+                    out.println("C:" + this.pseudo + ":PLAY:" + "");
+                    out.flush();
+                }
+                else {
+                    // sinon, c'est le message pour la reponse du jeu
                     out.println("C:" + this.pseudo + ":MESSAGE:" + msg);
                     out.flush();
                 }
+
+                ackServer = in.readLine();
+                System.out.println(ackServer);
             }
             socket.close();
         }catch(IOException ex){
