@@ -8,17 +8,20 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
-
 public class User {
 
-    // les paremetres d'user
     private String pseudo;
     private Socket socket;
 
-    //constructeur
+    /**
+     *
+     */
     public User(){}
 
-    //les methodes de'User
+    /**
+     *
+     * @return
+     */
     public String createPseudo() {
         String pseudo;
         String pseudo_vefify;
@@ -32,6 +35,11 @@ public class User {
         return pseudo;
     }
 
+    /**
+     *
+     * @param addressServer
+     * @param port
+     */
     public void connectServer(String addressServer, int port){
         String ackServer;
         try {
@@ -70,22 +78,37 @@ public class User {
         }
     }
 
+    /**
+     *
+     * @return
+     */
     public String getPseudo() {
         return pseudo;
     }
 
+    /**
+     *
+     * @param pseudo
+     */
     public void setPseudo(String pseudo) {
         this.pseudo = pseudo;
     }
 
+    /**
+     *
+     * @return
+     */
     public Socket getSocket() {
         return socket;
     }
 
+    /**
+     *
+     * @param socket
+     */
     public void setSocket(Socket socket) {
         this.socket = socket;
     }
-
 
     public static void main(String[] args) throws Exception {
         User user = new User();
