@@ -44,19 +44,33 @@ public class User {
         String ackServer;
         try {
             this.socket = new Socket(addressServer, port);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             PrintWriter out = new PrintWriter(socket.getOutputStream());
 
             //Envoyer le pseudo pour connecter le serveur
             out.println("C:" + this.pseudo + ":CONNECT:" + "");
             out.flush();
 
-            //Recuper ACK de serveur pour confirmer la connection
-            ackServer = in.readLine();
-            if (ackServer.equals("CONNECTED")) {
-                System.out.println("Tu es connecté au server");
-            }
+            //creer un threat pour recupere les messages du serveur
+            new Thread(new Runnable() {
+                public void run() {
+                    String ackServer;
+                    try {
+                        while((ackServer = in.readLine()) != null){
+                            if (ackServer.equals("CONNECTED")) {
+                                //Recuper ACK de serveur pour confirmer la connection
+                                System.out.println("Tu es connecté au server");
+                            }else{
+                                System.out.println(ackServer);
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }).start();
 
+            //envoyer les messages au serveur
             while (true) {
                 Scanner reader = new Scanner(System.in);
                 String msg = reader.nextLine();
@@ -76,9 +90,6 @@ public class User {
                     out.println("C:" + this.pseudo + ":MESSAGE:" + msg);
                     out.flush();
                 }
-
-                ackServer = in.readLine();
-                System.out.println(ackServer);
             }
             socket.close();
         }catch(IOException ex){

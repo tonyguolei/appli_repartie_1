@@ -7,6 +7,7 @@ public class Game {
     private int ScoreUser1;
     private int ScoreUser2;
     private User playingUser;
+    private int tour;
 
     public Game(User user1, User user2) {
         this.user1 = user1;
