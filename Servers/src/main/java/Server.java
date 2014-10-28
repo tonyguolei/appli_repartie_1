@@ -472,7 +472,7 @@ public class Server {
                                         addUserToList(user1, usersWaitList);
                                     }else{
                                         //s'il y a un client attendu, ils peuvent jouer le jeu
-                                        User user1 = findUserFromList(SplitServerMessage[1], usersWaitList);
+                                        User user1 = usersWaitList.get(0);
                                         removeUserFromList(user1, usersWaitList);
                                         addUserToList(user1, usersPlayList);
                                         User user2 = findUserFromList(SplitServerMessage[1], usersConnectedList);
