@@ -9,92 +9,60 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.*;
-
 import static java.lang.Thread.sleep;
+import java.io.*;
 
 public class Server {
 
-    private ServerSocket serverSocket;
-    /* l'identifiant du serveur est un entier naturel */
+    /*************GESTION DU SERVEUR***************/
     private int sId;
+    private int port;
+    private static boolean resurrect = false;
+
+    /*************GESTION INTERACTION SERVEURS*****/
+    private ServerSocket serverSocket;
+    private Socket serverClient;
+    private int nbServers;
+    private String[] neighborServer;
+    private String[] neighborBehindMe;
+    /* Nom du serveur master */
+    private static String[] master;
+    /* Contient tous les serveurs (en panne ou non) */
+    private List<String> listServer = new ArrayList<String>();
+    /* etatVoisin == 0 si le serveur n'a plus de message de la part de son voisin (time-out)
+     * etatVoisin == 1 si le serveur reçoit encore des messages de la part de son voisin */
+    private static int etatVoisin;
+
+    /************GESTION DES UTILISATEURS********/
+    /** Liste contenant les utilisateurs connectés mais inactifs */
     private List<User> usersConnectedList = new ArrayList<User>();
+    /* Liste contenant les utilisateurs en attente d'un adversaire */
     private List<User> usersWaitList = new ArrayList<User>();
+    /* Liste contenant les utilisateurs en train de jouer */
     private List<User> usersPlayList = new ArrayList<User>();
     private List<Game> gamesList = new ArrayList<Game>();
 
     private static BufferedReader inClient;
     private static PrintWriter outClient;
-    private Socket serverClient;
-    private int port;
-    private int nbServers;
-    private String[] neighborServer;
-    private String[] neighborBehindMe;
-    private static String[] master;
-    /* Contient tous les serveurs (en panne ou non) */
-    private List<String> listServer = new ArrayList<String>();
-    /**
-     * le voisin a l'état == 0 si le serveur n'a plus de message de sa part (time-out)
-     * sinon il a l'état == 1 si le serveur reçoit encore des messages de sa part
-     */
-    private static int etatVoisin;
 
     //TODO liste db
 
-    /****************************************************************************************************************/
+    /*************************************CONSTRUCTEUR - GETTER - SETTER ******************************************/
     /**
-     * Créé un serveur
-     *
+     * Créé un serveur à partir d'un Id et d'un numéro de port
      * @param sId
      * @param port
      */
     public Server(int sId, int port) {
         this.sId = sId;
         this.port = port;
-        this.nbServers = 4;
+        //this.nbServers = 4;
         try {
             createServer(port);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-    /**
-     * Récupère le numéro de port utilisé par le serveur
-     *
-     * @return entier contenant le port utilisé
-     */
-    public int getPort() {
-        return port;
-    }
-
-    /**
-     * Modifie le numéro de port utilisé par le serveur
-     *
-     * @param port
-     */
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    /**
-     * Récupère la socket du serveur
-     *
-     * @return la socket du serveur
-     */
-    public ServerSocket getServer() {
-        return serverSocket;
-    }
-
-    /**
-     * Modifie la socket du serveur
-     *
-     * @param serverSocket
-     */
-    public void setServer(ServerSocket serverSocket) {
-        this.serverSocket = serverSocket;
-    }
-
-    //TODO add liste db
 
     /**
      * Créé un serveur à partir d'un identifiant
@@ -106,8 +74,43 @@ public class Server {
     }
 
     /**
+     * Récupère le numéro de port utilisé par le serveur
+     * @return entier contenant le port utilisé
+     */
+    public int getPort() {
+        return port;
+    }
+
+    /**
+     * Modifie le numéro de port utilisé par le serveur
+     * @param port
+     */
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    /**
+     * Récupère la socket du serveur
+     * @return la socket du serveur
+     */
+    public ServerSocket getServer() {
+        return serverSocket;
+    }
+
+    /**
+     * Modifie la socket du serveur
+     * @param serverSocket
+     */
+    public void setServer(ServerSocket serverSocket) {
+        this.serverSocket = serverSocket;
+    }
+
+    //TODO add liste db
+
+    /*****************************************GESTION DES SERVEURS***********************************************/
+
+    /**
      * Créé un serveur à partir d'un numéro de port
-     *
      * @param port
      * @throws IOException
      */
@@ -179,15 +182,39 @@ public class Server {
      * Permet la lecture du fichier de configuration des serveurs
      */
     private void readServerConfig(){
-        listServer.add("1:localhost:10001:1");
-        listServer.add("2:localhost:10002:1");
-        listServer.add("3:localhost:10003:1");
-        listServer.add("4:localhost:10004:1");
+        Scanner sc;
+
+        try {
+            //lire le fichier de config
+            sc = new Scanner(new File("Servers/src/main/java/"+String.valueOf(sId)));
+            //passer les commentaires
+            sc.nextLine();
+            sc.nextLine();
+            sc.nextLine();
+            //mettre a jour le nb de serveurs total
+            this.nbServers = sc.nextInt();
+            sc.nextLine();
+
+            for (int i=0; i<nbServers ; i++){
+                listServer.add(sc.nextLine());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Affiche la liste des serveurs en détails
+     */
+    private void printConfig(){
+        for (int i=0; i < nbServers ; i++){
+            System.out.println(listServer.get(i));
+        }
     }
 
     /**
      * Gère l'élection du serveur master
-     * (Le master est le serveur vivant ayant le plus ID)
+     * (Le master est le serveur vivant ayant le plus petit ID)
      * @return
      */
     private String[] electMaster(){
@@ -225,14 +252,14 @@ public class Server {
      * @param sID l'identifiant du l'identifant du serveur tombé en panné
      */
     private void setServerResurrect(int sID){
-        String[] SplitInfo = null ;
-        String ServerResurrect = "";
+        String[] splitInfo;
+        String serverResurrect;
 
         for (int i = 0; i < nbServers; i++) {
-            SplitInfo = listServer.get(i).split(":",4);
-            if(sID== Integer.valueOf(SplitInfo[0])){
-                ServerResurrect= sID +":" +SplitInfo[1]+ ":" +SplitInfo[2]+":" + "1";
-                listServer.set(i, ServerResurrect);
+            splitInfo = listServer.get(i).split(":",4);
+            if(sID == Integer.valueOf(splitInfo[0])){
+                serverResurrect= sID +":" +splitInfo[1]+ ":" +splitInfo[2]+":" + "1";
+                listServer.set(i, serverResurrect);
             }
         }
     }
@@ -240,7 +267,6 @@ public class Server {
     /**
      * Renvoie les informations du voisin du serveur dont l'ID est passé en paramètre
      * (Fonction utilisée au démarrage ou lors de la détection d'une panne ou insertion d'un nouveau serveur)
-     *
      * @param sID l'identifiant d'un serveur
      * @return tableau contenant :
      * SplitInfo[0] contient l'id des serveurs
@@ -270,7 +296,7 @@ public class Server {
     }
 
     /**
-     *
+     * Recherche du voisin derriere le serveur sID
      * @param sID l'identifiant d'un serveur
      * @return
      */
@@ -280,17 +306,18 @@ public class Server {
         //tableau contenant les infos sur les serveurs -> commentaire ci dessus
         String[] splitInfo = null;
 
-        for ( int i = sID ; cycleRotation; i--){
+        for (int i = sID; cycleRotation; i--){
             if (i <= 1){
                 i = nbServers + 1;
             }
             splitInfo = listServer.get((i - 2) % nbServers).split(":", 4);
             if(Integer.valueOf(splitInfo[3])==1){
-                System.out.println(" Mon voisin derriere moi est le serveur : " + splitInfo[0] + " Port : " + splitInfo[2]);
+                System.out.println(" Mon voisin derriere moi est le serveur : " +
+                        splitInfo[0] + " Port : " + splitInfo[2]);
                 return splitInfo;
             }
             if (Integer.valueOf(splitInfo[0])==sID){
-                // tous les serveurs ont été parcouru donc sID n'a aucun voisin => tous les serveurs en panne
+                //tous les serveurs ont été parcourus donc sID n'a aucun voisin => tous les serveurs en panne
                 cycleRotation = false ;
             }
         }
@@ -316,14 +343,8 @@ public class Server {
         return splitInfo ;
     }
 
-    /*
-    Function permettant le demarrage de la partie client du serveur destiné a communiquer avec les autres serveurs
-    On cherche d'avoir son voisin ie le serveur auquel ce client va se connecter (whoisMyNeighbor())
-    Ensuite ce client tentera de se connecter au voisin detecté par la fonction ServerNeighbor()
-     */
-
     /**
-     * Permet de gérer le démarrage
+     * Permet de gérer le démarrage des serveurs
      */
     public void startServerClient( ){
         new Thread(new Runnable() {
@@ -361,10 +382,18 @@ public class Server {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
         while (true) {
-            //String msg = reader.readLine();
-            sleep(5000);
-            outClient.println("S:" + neighborBehindMe[0] + " : " + neighborBehindMe[2] +  " :" + "ALIVE");
-            outClient.flush();
+            // String msg = reader.readLine();
+            if(resurrect == false){
+                sleep(5000);
+                outClient.println("S:" + neighborBehindMe[0] + " : " + neighborBehindMe[2] +  " :" + "ALIVE");
+                outClient.flush();
+            }else{
+                System.out.println("Serveur ressuscité ");
+                setServerResurrect(sId);
+                outClient.println("S:" + neighborBehindMe[0] + ":" + sId + ":" + "RESSURECT");
+                outClient.flush();
+                resurrect = false;
+            }
             //System.out.println(in.readLine());
         }
     }
@@ -385,46 +414,53 @@ public class Server {
 
                     while (true) {
                         String msg = in.readLine();
-                       /*
-                       Distinction du client d'un serveur
-                       Les messages des Serveurs commencent toujours par S
-                       Format des messages
-                       Source : Adresse : port : MessageContent
-                       Source = S
-                       Adresse : IP du serveur
-                       Port : Port du serveur
-                       MessageContent  = "Contenu du message d'un serveur
-                       */
-
                         //Recuperation de l'entete du message
                         SplitServerMessage = msg.split(":", 4);
+                        String source = SplitServerMessage[0];
 
-                        if (SplitServerMessage[0].equals("S")) {
-                            //SplitServerMessage[3] contient le type du message
-                            switch(SplitServerMessage[3]){
+                        /*
+                       Format
+                       SourceServeur:Serveur1:Serveur2:Message | SourceClient:MessageBis
+                       SourceServeur : S
+                       SourceClient : C
+                       Message : RESSURECT | ALIVE | DEAD
+                           Si message ALIVE
+                           Serveur1 : le voisin i-1
+                           Serveur2 : le voisin i+1
+                           Si message RESSURECT | DEAD
+                           Serveur1 : le voisin i-1
+                           Serveur2 : le serveur lui meme i
+                       */
+
+                        if (source.equals("S")) {
+                            String serveur1 = SplitServerMessage[1];
+                            String serveur2 = SplitServerMessage[2];
+                            String contenu = SplitServerMessage[3];
+
+                            switch(contenu){
                                 case "ALIVE":
                                     etatVoisin = 1;
-                                    out.println(" Ack du serveur venant du serveur au port: " + getPort());
+                                    out.println("Ack du serveur venant du serveur au port: " + getPort());
                                     out.flush();
                                     break;
                                 case "DEAD":
                                     System.out.println(msg);
                                     //mise a jour des serveurs disponibles
-                                    setServerDead(Integer.valueOf(SplitServerMessage[1]));
+                                    setServerDead(Integer.valueOf(serveur1));
                                     // verifie si le voisin mort est son voisin
 
-                                    if(SplitServerMessage[1].equals(neighborServer[0])){
-                                        System. out.println("Connexion nouvelle au serveur : ");
+                                    if(serveur1.equals(neighborServer[0])){
+                                        System.out.println("Connexion nouvelle au serveur : ");
                                         // c'est a dire que le serveur mort c'est son voisin
                                         // il doit cherche à se connecter a celui qui a envoyé le message
                                         // et donc en mettant en jour son voisin
-                                        neighborServer = SearchServerById(Integer.valueOf(SplitServerMessage[2]));
+                                        neighborServer = SearchServerById(Integer.valueOf(serveur2));
                                         neighborBehindMe = whoIsMyNeighborBehindMe(sId);
                                         // lancement du client pour ce connecter au nouveau voisin
                                         // Relance l'election du master
                                         master = electMaster();
                                         startServerClient();
-                                        System. out.println("Connexion nouvelle au serveur : "+ neighborServer[0]);
+                                        System.out.println("Connexion nouvelle au serveur : "+ neighborServer[0]);
                                     } else {
                                         // Relance l'election du master
                                         master = electMaster();
@@ -434,60 +470,72 @@ public class Server {
                                     //retransmet le message a son voisin et fais la mise à jour
                                     break;
                                 case "MASTERDEAD":
+                                    //TODO traiter le message
                                     System.out.println("MESSAGE: " + msg);
+                                case "RESSURECT":
+                                    System.out.println(msg);
+                                    etatVoisin = 1;
+                                    //mise a jour des serveurs disponibles que le nouveau serveur est vivant
+                                    setServerResurrect(Integer.valueOf(serveur2));
+                                    //reexecute son algo de determination de son voisin de derriere
+                                    neighborServer = whoIsMyNeighbor(sId);
+                                    neighborBehindMe = whoIsMyNeighborBehindMe(sId);
+
+                                    if(serveur2.equals(neighborServer[0])){
+                                        System.out.println("Changement de serveur voisin  : ");
+                                        startServerClient();
+                                        System.out.println("Connexion nouvelle effectuee au serveur : "+ neighborServer[0]);
+                                    }else{
+                                        outClient.println(msg);
+                                        outClient.flush();
+                                    }
                                 default:
                                     break;
                             }
                         }else {
-                           /*
-                           Distinction du client d'un serveur
-                           Les messages des Serveurs commencent toujours par C
-                           Format des messages
-                           Source : Pseudo : TypeMessage : MessageContent
-                           Source = C
-                           Pseudo : Pseudo du client
-                           TypeMessage : Type de message du client
-                           MessageContent  = "Contenu du message d'un serveur
-                           */
-                            switch (SplitServerMessage[2]) {
+                            String contenu = SplitServerMessage[1];
+
+                            /*switch (SplitServerMessage[2]) {
                                 case "CONNECT":
-                                    System.out.println("Client " + SplitServerMessage[1] + " est conntecté");
-                                    //ajoute dans la liste connected
-                                    addUserToList(new User(SplitServerMessage[1], userSocket, Status.CONNECTED), usersConnectedList);
+                                    System.out.println("Client " + SplitServerMessage[1] + " est connecté");
+                                    //ajoute dans la liste des utilisateurs connectés
+                                    addUserToList(new User(SplitServerMessage[1], userSocket,
+                                            Status.CONNECTED), usersConnectedList);
                                     //envoyer ack au client
                                     out.println("CONNECTED");
                                     out.flush();
                                     break;
                                 case "DISCONNECT":
-                                    System.out.print("Client est déconnecté");
+                                    System.out.print("DISCONNECTED");
                                     userSocket.close();
                                     break;
                                 case "PLAY":
+                                    System.out.print("ASK FOR PLAYING");
                                     if(usersWaitList.isEmpty()){
-                                        //s'il n'y a pas d'autre client qui attend, le client doit attendre un client
-                                        out.println("Vous etre en train d'attendre autre joueur");
+                                        //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
+                                        out.println("Vous etre en train d'attendre un autre joueur");
                                         out.flush();
                                         User user1 = findUserFromList(SplitServerMessage[1], usersConnectedList);
                                         removeUserFromList(user1, usersConnectedList);
                                         addUserToList(user1, usersWaitList);
                                     }else{
-                                        //s'il y a un client attendu, ils peuvent jouer le jeu
+                                        //s'il y a un client également en attente, le jeu peut commencer
                                         User user1 = usersWaitList.get(0);
                                         removeUserFromList(user1, usersWaitList);
                                         addUserToList(user1, usersPlayList);
-                                        User user2 = findUserFromList(SplitServerMessage[1], usersConnectedList);
-                                        removeUserFromList(user2, usersConnectedList);
+                                        User user2 = findUserFromList(SplitServerMessage[1], usersWaitList);
+                                        removeUserFromList(user2, usersWaitList);
                                         addUserToList(user2, usersPlayList);
                                     }
                                     break;
                                 case "MESSAGE":
                                     System.out.println("MESSAGE: " + SplitServerMessage[3]);
                                     //envoyer ack au client
-                                    out.println("MESSAGE RECIEVED: " + SplitServerMessage[3]);
+                                    out.println("MESSAGE RECEIVED: " + SplitServerMessage[3]);
                                     out.flush();
                                 default:
                                     break;
-                            }
+                            }*/
                         }
                     }
                 } catch(IOException ex) {
@@ -498,8 +546,10 @@ public class Server {
         }).start();
     }
 
+    /************************************************GESTION DES UTILISATEURS***************************************/
+
     /**
-     *
+     * Ajouter utilisateur
      * @param user
      * @param list
      */
@@ -515,7 +565,7 @@ public class Server {
     }
 
     /**
-     *
+     * Enlever l'utilisateur d'une liste
      * @param user
      * @param list
      */
@@ -524,10 +574,10 @@ public class Server {
     }
 
     /**
-     *
+     * Chercher un utilisateur dans une liste
      * @param pseudo
      * @param list
-     * @return
+     * @return l'utilisateur trouvé
      */
     private User findUserFromList(String pseudo, List<User> list){
         for (User user: list) {
@@ -574,21 +624,33 @@ public class Server {
         return null;
     }
 
+    /***************************************************************************************************************/
+
     public static void main(String[] args) {
         Scanner scan = new Scanner(System.in);
-        String ServerNumber ;
+        String serverNumber;
 
+        System.out.println("Nouveau serveur : taper 1 \n Ancien serveur : taper 2");
+        serverNumber = scan.nextLine();
+        if(Integer.valueOf(serverNumber) == 2 ){
+            resurrect = true;
+        }
+
+        //TODO Gerer si serveur avec ce numéro deja présent
         System.out.println(" Saisir le numéro du serveur ");
-        ServerNumber = scan.nextLine();
-        System.out.println("*************** Lancement du serveur N° " + ServerNumber+ "  **************");
+        serverNumber = scan.nextLine();
+        System.out.println("*************** Lancement du serveur N° " + serverNumber+ "  **************");
+        Server server =  new Server(Integer.parseInt(serverNumber),Integer.parseInt(serverNumber)+10000);
+        server.readServerConfig();
 
-        Server Serveur =  new Server(Integer.parseInt(ServerNumber),Integer.parseInt(ServerNumber)+10000);
-        Serveur.readServerConfig();
+        System.out.println("*************** Liste des serveurs   **************");
+        server.printConfig();
+
         // lancement de l'horloge
-        Serveur.TimeOut();
+        server.TimeOut();
         // lancement du client
-        Serveur.startServerClient();
+        server.startServerClient();
         //Election du master au debut
-        master = Serveur.electMaster();
+        master = server.electMaster();
     }
 }
