@@ -105,6 +105,39 @@ public class Server {
         this.serverSocket = serverSocket;
     }
 
+    /**
+     * Met a jour la liste des serveurs si un serveur tombe en panne
+     * @param sID l'identifant du serveur tombé en panné
+     */
+    private void setServerDead(int sID){
+        String[] splitInfo = null;
+        String spanne = "";
+
+        for (int i = 0; i < nbServers; i++) {
+            splitInfo = listServer.get(i).split(":",4);
+            if(sID== Integer.valueOf(splitInfo[0])){
+                spanne = sID +":" +splitInfo[1]+ ":" +splitInfo[2]+":" + "0";
+                listServer.set(i, spanne);
+            }
+        }
+    }
+
+    /**
+     * Met a jour la liste des serveurs si un serveur tombé en panne ressuscite
+     * @param sID l'identifiant du l'identifant du serveur tombé en panné
+     */
+    private void setServerResurrect(int sID){
+        String[] splitInfo;
+        String serverResurrect;
+
+        for (int i = 0; i < nbServers; i++) {
+            splitInfo = listServer.get(i).split(":",4);
+            if(sID == Integer.valueOf(splitInfo[0])){
+                serverResurrect= sID +":" +splitInfo[1]+ ":" +splitInfo[2]+":" + "1";
+                listServer.set(i, serverResurrect);
+            }
+        }
+    }
     //TODO add liste db
 
     /*****************************************GESTION DES SERVEURS***********************************************/
@@ -228,40 +261,6 @@ public class Server {
             }
         }
         return splitInfo;
-    }
-
-    /**
-     * Met a jour la liste des serveurs si un serveur tombe en panne
-     * @param sID l'identifant du serveur tombé en panné
-     */
-    private void setServerDead(int sID){
-        String[] splitInfo = null;
-        String spanne = "";
-
-        for (int i = 0; i < nbServers; i++) {
-            splitInfo = listServer.get(i).split(":",4);
-            if(sID== Integer.valueOf(splitInfo[0])){
-                spanne = sID +":" +splitInfo[1]+ ":" +splitInfo[2]+":" + "0";
-                listServer.set(i, spanne);
-            }
-        }
-    }
-
-    /**
-     * Met a jour la liste des serveurs si un serveur tombé en panne ressuscite
-     * @param sID l'identifiant du l'identifant du serveur tombé en panné
-     */
-    private void setServerResurrect(int sID){
-        String[] splitInfo;
-        String serverResurrect;
-
-        for (int i = 0; i < nbServers; i++) {
-            splitInfo = listServer.get(i).split(":",4);
-            if(sID == Integer.valueOf(splitInfo[0])){
-                serverResurrect= sID +":" +splitInfo[1]+ ":" +splitInfo[2]+":" + "1";
-                listServer.set(i, serverResurrect);
-            }
-        }
     }
 
     /**
@@ -420,7 +419,7 @@ public class Server {
 
                         /*
                        Format
-                       SourceServeur:Serveur1:Serveur2:Message | SourceClient:MessageBis
+                       SourceServeur:Serveur1:Serveur2:Message | SourceClient:Client:TypeMessage:Message
                        SourceServeur : S
                        SourceClient : C
                        Message : RESSURECT | ALIVE | DEAD
@@ -430,6 +429,7 @@ public class Server {
                            Si message RESSURECT | DEAD
                            Serveur1 : le voisin i-1
                            Serveur2 : le serveur lui meme i
+                       MessageBis : CONNECT | DISCONNET | PLAY | MESSAGE
                        */
 
                         if (source.equals("S")) {
@@ -493,14 +493,15 @@ public class Server {
                                     break;
                             }
                         }else {
-                            String contenu = SplitServerMessage[1];
+                            String client = SplitServerMessage[1];
+                            String typemsg = SplitServerMessage[2];
+                            String contenu = SplitServerMessage[3];
 
-                            /*switch (SplitServerMessage[2]) {
+                            switch (typemsg) {
                                 case "CONNECT":
-                                    System.out.println("Client " + SplitServerMessage[1] + " est connecté");
+                                    System.out.println("Client " + client + " est connecté");
                                     //ajoute dans la liste des utilisateurs connectés
-                                    addUserToList(new User(SplitServerMessage[1], userSocket,
-                                            Status.CONNECTED), usersConnectedList);
+                                    addUserToList(new User(client, userSocket,Status.CONNECTED), usersConnectedList);
                                     //envoyer ack au client
                                     out.println("CONNECTED");
                                     out.flush();
@@ -515,7 +516,7 @@ public class Server {
                                         //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
                                         out.println("Vous etre en train d'attendre un autre joueur");
                                         out.flush();
-                                        User user1 = findUserFromList(SplitServerMessage[1], usersConnectedList);
+                                        User user1 = findUserFromList(client, usersConnectedList);
                                         removeUserFromList(user1, usersConnectedList);
                                         addUserToList(user1, usersWaitList);
                                     }else{
@@ -523,19 +524,19 @@ public class Server {
                                         User user1 = usersWaitList.get(0);
                                         removeUserFromList(user1, usersWaitList);
                                         addUserToList(user1, usersPlayList);
-                                        User user2 = findUserFromList(SplitServerMessage[1], usersWaitList);
+                                        User user2 = findUserFromList(client, usersWaitList);
                                         removeUserFromList(user2, usersWaitList);
                                         addUserToList(user2, usersPlayList);
                                     }
                                     break;
                                 case "MESSAGE":
-                                    System.out.println("MESSAGE: " + SplitServerMessage[3]);
+                                    System.out.println("MESSAGE: " + contenu);
                                     //envoyer ack au client
-                                    out.println("MESSAGE RECEIVED: " + SplitServerMessage[3]);
+                                    out.println("MESSAGE RECEIVED: " + contenu);
                                     out.flush();
                                 default:
                                     break;
-                            }*/
+                            }
                         }
                     }
                 } catch(IOException ex) {
