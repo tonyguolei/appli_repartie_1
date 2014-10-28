@@ -1,3 +1,5 @@
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.Socket;
 
 /**
@@ -9,6 +11,7 @@ public class User {
     private String pseudo;
     private Socket socket;
     private Status status;
+    private PrintWriter socketOut;
 
     /**
      * Crée un utilisateur
@@ -18,6 +21,11 @@ public class User {
         this.pseudo = pseudo;
         this.socket = socket;
         this.status = status;
+        try {
+            this.socketOut = (new PrintWriter(socket.getOutputStream()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -66,5 +74,13 @@ public class User {
      */
     public void setStatus(Status status) {
         this.status = status;
+    }
+
+    public PrintWriter getSocketOut() {
+        return socketOut;
+    }
+
+    public void setSocketOut(PrintWriter socketOut) {
+        this.socketOut = socketOut;
     }
 }

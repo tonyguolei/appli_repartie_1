@@ -51,7 +51,7 @@ public class User {
             out.println("C:" + this.pseudo + ":CONNECT:" + "");
             out.flush();
 
-            //creer un threat pour recupere les messages du serveur
+            //creer un thread pour recupere les messages du serveur
             new Thread(new Runnable() {
                 public void run() {
                     String ackServer;
@@ -87,7 +87,7 @@ public class User {
                 }
                 else {
                     // sinon, c'est le message pour la reponse du jeu
-                    out.println("C:" + this.pseudo + ":MESSAGE:" + msg);
+                    out.println("C:" + this.pseudo + ":RESPONSE:" + msg);
                     out.flush();
                 }
             }

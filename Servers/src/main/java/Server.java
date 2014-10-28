@@ -429,7 +429,7 @@ public class Server {
                            Si message RESSURECT | DEAD
                            Serveur1 : le voisin i-1
                            Serveur2 : le serveur lui meme i
-                       MessageBis : CONNECT | DISCONNET | PLAY | MESSAGE
+                       MessageBis : CONNECT | DISCONNET | PLAY | RESPONSE
                        */
 
                         if (source.equals("S")) {
@@ -499,7 +499,7 @@ public class Server {
 
                             switch (typemsg) {
                                 case "CONNECT":
-                                    System.out.println("Client " + client + " est connecté");
+                                    System.out.println("Client " + client + " CONNECTED");
                                     //ajoute dans la liste des utilisateurs connectés
                                     addUserToList(new User(client, userSocket,Status.CONNECTED), usersConnectedList);
                                     //envoyer ack au client
@@ -507,11 +507,11 @@ public class Server {
                                     out.flush();
                                     break;
                                 case "DISCONNECT":
-                                    System.out.print("DISCONNECTED");
+                                    System.out.println("Client " + client + " DISCONNECTED");
                                     userSocket.close();
                                     break;
                                 case "PLAY":
-                                    System.out.print("ASK FOR PLAYING");
+                                    System.out.println("Client " + client + " ASK FOR PLAYING");
                                     if(usersWaitList.isEmpty()){
                                         //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
                                         out.println("Vous etre en train d'attendre un autre joueur");
@@ -524,16 +524,57 @@ public class Server {
                                         User user1 = usersWaitList.get(0);
                                         removeUserFromList(user1, usersWaitList);
                                         addUserToList(user1, usersPlayList);
-                                        User user2 = findUserFromList(client, usersWaitList);
-                                        removeUserFromList(user2, usersWaitList);
+                                        User user2 = findUserFromList(client, usersConnectedList);
+                                        removeUserFromList(user2, usersConnectedList);
                                         addUserToList(user2, usersPlayList);
+                                        addGameToPlayList(new Game(user1,user2));
+
+                                        //informer au clients pour commencer le jeu
+                                        System.out.println("Client " + user1.getPseudo() + " IS PLAYING THE GAME");
+                                        System.out.println("Client " + user2.getPseudo() + " IS PLAYING THE GAME");
+                                        user1.getSocketOut().println("C'est parti !!!");
+                                        user1.getSocketOut().println("Question1");
+                                        user1.getSocketOut().flush();
+                                        out.println("C'est parti !!!");
+                                        out.println("Client " + user1.getPseudo() + " est en train de jouer...");
+                                        out.flush();
                                     }
                                     break;
-                                case "MESSAGE":
-                                    System.out.println("MESSAGE: " + contenu);
-                                    //envoyer ack au client
-                                    out.println("MESSAGE RECEIVED: " + contenu);
-                                    out.flush();
+                                case "RESPONSE":
+                                    Game game = findGameFromPlayList(client);
+                                    User userPlaying = game.getUserPlaying();
+
+                                    if (contenu.equals("1")) {
+                                        userPlaying.getSocketOut().println("votre reponse est correct");
+                                        userPlaying.getSocketOut().flush();
+                                        if(userPlaying == game.getUser1()) {
+                                            game.setScoreUser1(game.getScoreUser1() + 1);
+                                            game.setTourUser1(game.getTourUser1()+1);
+                                        }else{
+                                            game.setScoreUser2(game.getScoreUser2() + 1);
+                                            game.setTourUser2(game.getTourUser2()+1);
+                                        }
+                                    }else {
+                                        userPlaying.getSocketOut().println("votre reponse est faux");
+                                        userPlaying.getSocketOut().flush();
+                                        if(userPlaying == game.getUser1()) {
+                                            game.setTourUser1(game.getTourUser1()+1);
+                                        }else{
+                                            game.setTourUser2(game.getTourUser2()+1);
+                                        }
+                                    }
+
+                                    if(userPlaying == game.getUser1()){
+                                        userPlaying.getSocketOut().println("Client " + game.getUser2().getPseudo() + " est en train de jouer...");
+                                        userPlaying.getSocketOut().flush();
+                                        game.getUser2().getSocketOut().println("Question1");
+                                        game.getUser2().getSocketOut().flush();
+                                        game.setUserPlaying(game.getUser2());
+                                    }else {
+                                        System.out.println("Game is over");
+                                    }
+
+                                    break;
                                 default:
                                     break;
                             }
@@ -561,7 +602,7 @@ public class Server {
         }else if(list == usersWaitList){
             user.setStatus(Status.WAIT);
         }else if(list == usersPlayList){
-            user.setStatus(Status.PLAY);
+            //user.setStatus(Status.PLAY);
         }
     }
 
@@ -592,29 +633,26 @@ public class Server {
     /**
      *
      * @param game
-     * @param list
      */
-    private void addGameToPlayList(Game game, List<Game> list){
-        list.remove(game);
+    private void addGameToPlayList(Game game){
+        this.gamesList.add(game);
     }
 
     /**
      *
      * @param game
-     * @param list
      */
-    private void removeGameFromPlayList(Game game, List<Game> list){
-        list.add(game);
+    private void removeGameFromPlayList(Game game){
+        this.gamesList.remove(game);
     }
 
     /**
      *
      * @param pseudo
-     * @param list
      * @return
      */
-    private Game findGameFromList(String pseudo, List<Game> list){
-        for (Game game: list) {
+    private Game findGameFromPlayList(String pseudo){
+        for (Game game: this.gamesList) {
             if(game.getUser1().getPseudo().equals(pseudo)){
                 return game;
             }

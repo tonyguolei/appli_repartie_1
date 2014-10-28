@@ -3,18 +3,21 @@
  */
 public class Game {
     private User user1;
+    private User userPlaying;
     private User user2;
     private int ScoreUser1;
     private int ScoreUser2;
-    private User playingUser;
-    private int tour;
+    private int tourUser1;
+    private int tourUser2;
 
     public Game(User user1, User user2) {
         this.user1 = user1;
         this.user2 = user2;
+        this.userPlaying = user1;
         this.ScoreUser1 = 0;
         this.ScoreUser2 = 0;
-        this.playingUser = user1;
+        this.tourUser1 = 0;
+        this.tourUser2 = 0;
     }
 
     /**
@@ -81,12 +84,28 @@ public class Game {
         ScoreUser2 = scoreUser2;
     }
 
-    public User getPlayingUser() {
-        return playingUser;
+    public int getTourUser1() {
+        return tourUser1;
     }
 
-    public void setPlayingUser(User playingUser) {
-        this.playingUser = playingUser;
+    public void setTourUser1(int tourUser1) {
+        this.tourUser1 = tourUser1;
+    }
+
+    public int getTourUser2() {
+        return tourUser2;
+    }
+
+    public void setTourUser2(int tourUser2) {
+        this.tourUser2 = tourUser2;
+    }
+
+    public User getUserPlaying() {
+        return userPlaying;
+    }
+
+    public void setUserPlaying(User userPlaying) {
+        this.userPlaying = userPlaying;
     }
 }
 
