@@ -34,18 +34,16 @@ public class Server {
     private static int etatVoisin;
 
     /************GESTION DES UTILISATEURS********/
-    /** Liste contenant les utilisateurs connectés mais inactifs */
+    /* Liste contenant les utilisateurs connectés mais inactifs */
     private List<User> usersConnectedList = new ArrayList<User>();
     /* Liste contenant les utilisateurs en attente d'un adversaire */
     private List<User> usersWaitList = new ArrayList<User>();
-    /* Liste contenant les utilisateurs en train de jouer */
-    private List<User> usersPlayList = new ArrayList<User>();
+    /* Liste contenant les jeux en cours */
     private List<Game> gamesList = new ArrayList<Game>();
 
+    //TODO ces deux parametres ne sont pas pour gestion des utilisateur??? Je les utilise pas, ce sont pour Servuers, on va peut-etre les renommer. C'est ambigous
     private static BufferedReader inClient;
     private static PrintWriter outClient;
-
-    //TODO liste db
 
     /*************************************CONSTRUCTEUR - GETTER - SETTER ******************************************/
     /**
@@ -138,7 +136,6 @@ public class Server {
             }
         }
     }
-    //TODO add liste db
 
     /*****************************************GESTION DES SERVEURS***********************************************/
 
@@ -413,6 +410,7 @@ public class Server {
 
                     while (true) {
                         String msg = in.readLine();
+                        //Recuperation de l'entete du message
                         SplitServerMessage = msg.split(":", 4);
                         String source = SplitServerMessage[0];
 
@@ -483,8 +481,7 @@ public class Server {
                                     if(serveur2.equals(neighborServer[0])){
                                         System.out.println("Changement de serveur voisin  : ");
                                         startServerClient();
-                                        System.out.println("Connexion nouvelle effectuee au serveur : "
-                                                + neighborServer[0]);
+                                        System.out.println("Connexion nouvelle effectuee au serveur : "+ neighborServer[0]);
                                     }else{
                                         outClient.println(msg);
                                         outClient.flush();
@@ -503,7 +500,8 @@ public class Server {
                                     //ajoute dans la liste des utilisateurs connectés
                                     addUserToList(new User(client, userSocket,Status.CONNECTED), usersConnectedList);
                                     //envoyer ack au client
-                                    out.println("CONNECTED");
+                                    out.println("Tu es connecté au serveur");
+                                    out.println("Tapez \"play\" pour jouer le jeu...");
                                     out.flush();
                                     break;
                                 case "DISCONNECT":
@@ -514,7 +512,7 @@ public class Server {
                                     System.out.println("Client " + client + " ASK FOR PLAYING");
                                     if(usersWaitList.isEmpty()){
                                         //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
-                                        out.println("Vous etre en train d'attendre un autre joueur");
+                                        out.println("Vous etre en train d'attendre un autre joueur...");
                                         out.flush();
                                         User user1 = findUserFromList(client, usersConnectedList);
                                         removeUserFromList(user1, usersConnectedList);
@@ -523,58 +521,74 @@ public class Server {
                                         //s'il y a un client également en attente, le jeu peut commencer
                                         User user1 = usersWaitList.get(0);
                                         removeUserFromList(user1, usersWaitList);
-                                        addUserToList(user1, usersPlayList);
                                         User user2 = findUserFromList(client, usersConnectedList);
                                         removeUserFromList(user2, usersConnectedList);
-                                        addUserToList(user2, usersPlayList);
-                                        addGameToPlayList(new Game(user1,user2));
+                                        addGameToGameList(new Game(user1,user2));
 
-                                        //informer au clients pour commencer le jeu
+                                        //informer le client pour commencer le jeu (le jeu commence par le client qui attend)
                                         System.out.println("Client " + user1.getPseudo() + " IS PLAYING THE GAME");
                                         System.out.println("Client " + user2.getPseudo() + " IS PLAYING THE GAME");
                                         user1.getSocketOut().println("C'est parti !!!");
-                                        user1.getSocketOut().println("Question1");
+                                        //TODO remplacer par ficher questionQuiz.properties
+                                        user1.getSocketOut().println("Combien y a-t-il de langues de travail à l’ONU et quelles sont-elles ? \n1 : l’anglais \n2 : l’anglais et l’espagnol \n3 : l’anglais et le français \n4 : l’anglais, le chinois, le français et le russe");
+                                        user1.getSocketOut().println("Entrez votre réponse:");
                                         user1.getSocketOut().flush();
                                         out.println("C'est parti !!!");
-                                        out.println("Client " + user1.getPseudo() + " est en train de jouer...");
+                                        out.println("Attendez! Client " + user1.getPseudo() + " est en train de jouer...");
                                         out.flush();
                                     }
                                     break;
                                 case "RESPONSE":
-                                    Game game = findGameFromPlayList(client);
-                                    User userPlaying = game.getUserPlaying();
+                                    Game game = findGameFromGameList(client);
 
-                                    if (contenu.equals("1")) {
-                                        userPlaying.getSocketOut().println("votre reponse est correct");
-                                        userPlaying.getSocketOut().flush();
-                                        if(userPlaying == game.getUser1()) {
-                                            game.setScoreUser1(game.getScoreUser1() + 1);
-                                            game.setTourUser1(game.getTourUser1()+1);
-                                        }else{
-                                            game.setScoreUser2(game.getScoreUser2() + 1);
-                                            game.setTourUser2(game.getTourUser2()+1);
-                                        }
-                                    }else {
-                                        userPlaying.getSocketOut().println("votre reponse est faux");
-                                        userPlaying.getSocketOut().flush();
-                                        if(userPlaying == game.getUser1()) {
-                                            game.setTourUser1(game.getTourUser1()+1);
-                                        }else{
-                                            game.setTourUser2(game.getTourUser2()+1);
-                                        }
+                                    //recuperer la reponse du client et traiter la reponse
+                                    //TODO remplacer par ficher questionQuiz.properties
+                                    if (contenu.equals("2")) {
+                                        game.getUserPlaying().getSocketOut().println("votre reponse est correct");
+                                        game.getUserPlaying().getSocketOut().flush();
+                                        game.setTourUserPlaying(game.getTourUserPlaying() + 1);
+                                        game.setScoreUserPlaying(game.getScoreUserPlaying() + 1);
+                                    } else {
+                                        game.getUserPlaying().getSocketOut().println("votre reponse est faux");
+                                        game.getUserPlaying().getSocketOut().flush();
+                                        game.setTourUserPlaying(game.getTourUserPlaying() + 1);
                                     }
 
-                                    if(userPlaying == game.getUser1()){
-                                        userPlaying.getSocketOut().println("Client " + game.getUser2().getPseudo()
-                                                + " est en train de jouer...");
-                                        userPlaying.getSocketOut().flush();
-                                        game.getUser2().getSocketOut().println("Question1");
+
+                                    if(game.getUserPlaying() == game.getUser1()){
+                                    //si le premier client fini son tour, l'autre client va commencer son tour
+                                        game.getUserPlaying().getSocketOut().println("Client " + game.getUser2().getPseudo() + " est en train de jouer...");
+                                        game.getUserPlaying().getSocketOut().flush();
+                                        //TODO remplacer par ficher questionQuiz.properties
+                                        game.getUser2().getSocketOut().println("Combien y a-t-il de langues de travail à l’ONU et quelles sont-elles ? \n1 : l’anglais \n2 : l’anglais et l’espagnol \n3 : l’anglais et le français \n4 : l’anglais, le chinois, le français et le russe");
+                                        game.getUser2().getSocketOut().println("Entrez votre réponse:");
                                         game.getUser2().getSocketOut().flush();
                                         game.setUserPlaying(game.getUser2());
                                     }else {
-                                        System.out.println("Game is over");
-                                    }
+                                    //si le deuxieme client fini son tour, le leu est terminé
+                                        if(game.getScoreUser1() > game.getScoreUser2()) {
+                                            game.getUser1().getSocketOut().println("Vous avez gagné !!!");
+                                            game.getUser1().getSocketOut().flush();
+                                            game.getUser2().getSocketOut().println("Vous avez perdu !!!");
+                                            game.getUser2().getSocketOut().flush();
+                                        }else if(game.getScoreUser1() < game.getScoreUser2()){
+                                            game.getUser1().getSocketOut().println("Vous avez perdu !!!");
+                                            game.getUser1().getSocketOut().flush();
+                                            game.getUser2().getSocketOut().println("Vous avez gagné !!!");
+                                            game.getUser2().getSocketOut().flush();
+                                        }else {
+                                            game.getUser1().getSocketOut().println("Match nul !!!");
+                                            game.getUser1().getSocketOut().flush();
+                                            game.getUser2().getSocketOut().println("Match nul !!!");
+                                            game.getUser2().getSocketOut().flush();
+                                        }
 
+                                        System.out.println("GAME BETWEEN " + game.getUser1().getPseudo() + " AND " + game.getUser2().getPseudo() + " IS OVER");
+                                       //enleve le jeu de la liste gamesList et deplacer les client dans la liste usersConnectedList
+                                        addUserToList(game.getUser1(), usersConnectedList);
+                                        addUserToList(game.getUser2(), usersConnectedList);
+                                        removeGameFromGameList(game);
+                                    }
                                     break;
                                 default:
                                     break;
@@ -602,8 +616,6 @@ public class Server {
             user.setStatus(Status.CONNECTED);
         }else if(list == usersWaitList){
             user.setStatus(Status.WAIT);
-        }else if(list == usersPlayList){
-            //user.setStatus(Status.PLAY);
         }
     }
 
@@ -635,15 +647,17 @@ public class Server {
      *
      * @param game
      */
-    private void addGameToPlayList(Game game){
+    private void addGameToGameList(Game game){
         this.gamesList.add(game);
+        game.getUser1().setStatus(Status.PLAY);
+        game.getUser2().setStatus(Status.PLAY);
     }
 
     /**
      *
      * @param game
      */
-    private void removeGameFromPlayList(Game game){
+    private void removeGameFromGameList(Game game){
         this.gamesList.remove(game);
     }
 
@@ -652,7 +666,7 @@ public class Server {
      * @param pseudo
      * @return
      */
-    private Game findGameFromPlayList(String pseudo){
+    private Game findGameFromGameList(String pseudo){
         for (Game game: this.gamesList) {
             if(game.getUser1().getPseudo().equals(pseudo)){
                 return game;
