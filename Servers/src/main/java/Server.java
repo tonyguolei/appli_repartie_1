@@ -413,7 +413,6 @@ public class Server {
 
                     while (true) {
                         String msg = in.readLine();
-                        //Recuperation de l'entete du message
                         SplitServerMessage = msg.split(":", 4);
                         String source = SplitServerMessage[0];
 
@@ -484,7 +483,8 @@ public class Server {
                                     if(serveur2.equals(neighborServer[0])){
                                         System.out.println("Changement de serveur voisin  : ");
                                         startServerClient();
-                                        System.out.println("Connexion nouvelle effectuee au serveur : "+ neighborServer[0]);
+                                        System.out.println("Connexion nouvelle effectuee au serveur : "
+                                                + neighborServer[0]);
                                     }else{
                                         outClient.println(msg);
                                         outClient.flush();
@@ -565,7 +565,8 @@ public class Server {
                                     }
 
                                     if(userPlaying == game.getUser1()){
-                                        userPlaying.getSocketOut().println("Client " + game.getUser2().getPseudo() + " est en train de jouer...");
+                                        userPlaying.getSocketOut().println("Client " + game.getUser2().getPseudo()
+                                                + " est en train de jouer...");
                                         userPlaying.getSocketOut().flush();
                                         game.getUser2().getSocketOut().println("Question1");
                                         game.getUser2().getSocketOut().flush();
