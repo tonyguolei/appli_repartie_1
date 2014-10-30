@@ -20,6 +20,38 @@ public class Game {
         this.tourUser2 = 0;
     }
 
+    public int getTourUserPlaying() {
+        if(userPlaying == user1) {
+            return tourUser1;
+        }else{
+            return tourUser2;
+        }
+    }
+
+    public void setTourUserPlaying(int userPlayingTour) {
+        if(userPlaying == user1) {
+            tourUser1 = userPlayingTour;
+        }else{
+            tourUser2 = userPlayingTour;
+        }
+    }
+
+    public int getScoreUserPlaying() {
+        if(userPlaying == user1) {
+            return ScoreUser1;
+        }else{
+            return ScoreUser2;
+        }
+    }
+
+    public void setScoreUserPlaying(int userPlayingScore) {
+        if(userPlaying == user1) {
+            ScoreUser1 = userPlayingScore;
+        }else{
+            ScoreUser2 = userPlayingScore;
+        }
+    }
+
     /**
      *
      * @return

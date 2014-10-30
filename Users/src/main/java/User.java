@@ -12,6 +12,8 @@ public class User {
 
     private String pseudo;
     private Socket socket;
+    private String addressServer;
+    private int portServer;
 
     /**
      *
@@ -27,16 +29,25 @@ public class User {
         String pseudo_vefify;
         Scanner reader = new Scanner(System.in);
         do{
-            System.out.println("Enter your pseudo: ");
+            System.out.println("Entrez votre pseudo: ");
             pseudo = reader.nextLine();
-            System.out.println("Enter your pseudo once more: ");
+            System.out.println("Entrez encore une fois votre pseudo: ");
             pseudo_vefify = reader.nextLine();
         }while(!pseudo.equals(pseudo_vefify));
         return pseudo;
     }
 
     /**
-     *
+     * configuration les parametres du server en lisant le ficher ConfigServer.propertie
+     * @param nbrServer
+     */
+    public void configureServer(int nbrServer) {
+        ConfigurationFileProperties configServer = new ConfigurationFileProperties("Users/src/main/java/ConfigServer.properties");
+        addressServer = configServer.getValue("addressServer" + Integer.toString(nbrServer));
+        portServer = Integer.parseInt(configServer.getValue("portServer" + Integer.toString(nbrServer)));
+    }
+    /**
+     * connecter au server
      * @param addressServer
      * @param port
      */
@@ -57,12 +68,7 @@ public class User {
                     String ackServer;
                     try {
                         while((ackServer = in.readLine()) != null){
-                            if (ackServer.equals("CONNECTED")) {
-                                //Recuper ACK de serveur pour confirmer la connection
-                                System.out.println("Tu es connecté au server");
-                            }else{
-                                System.out.println(ackServer);
-                            }
+                            System.out.println(ackServer);
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -132,6 +138,7 @@ public class User {
     public static void main(String[] args) throws Exception {
         User user = new User();
         user.setPseudo(user.createPseudo());
-        user.connectServer("localhost", 10001);
+        user.configureServer(1);
+        user.connectServer(user.addressServer, user.portServer);
     }
 }
