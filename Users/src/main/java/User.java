@@ -52,7 +52,6 @@ public class User {
      * @param port
      */
     public void connectServer(String addressServer, int port){
-        String ackServer;
         try {
             this.socket = new Socket(addressServer, port);
             final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
