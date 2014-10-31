@@ -684,7 +684,8 @@ public class Server {
         Scanner scan = new Scanner(System.in);
         String serverNumber;
 
-        System.out.println("Nouveau serveur : taper 1 \n Ancien serveur : taper 2");
+        System.out.println("_______Lancement d'un serveur______");
+        System.out.println("Nouveau serveur : saisir 1 \n Ancien serveur : saisir 2");
         serverNumber = scan.nextLine();
         if(Integer.valueOf(serverNumber) == 2 ){
             resurrect = true;
