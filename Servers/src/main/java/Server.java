@@ -523,14 +523,17 @@ public class Server {
                                         removeUserFromList(user1, usersWaitList);
                                         User user2 = findUserFromList(client, usersConnectedList);
                                         removeUserFromList(user2, usersConnectedList);
-                                        addGameToGameList(new Game(user1,user2));
+                                        Game game = new Game(user1,user2);
+                                        addGameToGameList(game);
+
+                                        //preparer des question pour le client
+                                        String question = prepareQuestions(game);
 
                                         //informer le client pour commencer le jeu (le jeu commence par le client qui attend)
                                         System.out.println("Client " + user1.getPseudo() + " IS PLAYING THE GAME");
                                         System.out.println("Client " + user2.getPseudo() + " IS PLAYING THE GAME");
                                         user1.getSocketOut().println("C'est parti !!!");
-                                        //TODO remplacer par ficher questionQuiz.properties
-                                        user1.getSocketOut().println("Combien y a-t-il de langues de travail à l’ONU et quelles sont-elles ? \n1 : l’anglais \n2 : l’anglais et l’espagnol \n3 : l’anglais et le français \n4 : l’anglais, le chinois, le français et le russe");
+                                        user1.getSocketOut().println(question);
                                         user1.getSocketOut().println("Entrez votre réponse:");
                                         user1.getSocketOut().flush();
                                         out.println("C'est parti !!!");
@@ -540,10 +543,10 @@ public class Server {
                                     break;
                                 case "RESPONSE":
                                     Game game = findGameFromGameList(client);
+                                    String response = getResponse(game);
 
                                     //recuperer la reponse du client et traiter la reponse
-                                    //TODO remplacer par ficher questionQuiz.properties
-                                    if (contenu.equals("2")) {
+                                    if (contenu.equals(response)) {
                                         game.getUserPlaying().getSocketOut().println("votre reponse est correct");
                                         game.getUserPlaying().getSocketOut().flush();
                                         game.setTourUserPlaying(game.getTourUserPlaying() + 1);
@@ -559,11 +562,16 @@ public class Server {
                                     //si le premier client fini son tour, l'autre client va commencer son tour
                                         game.getUserPlaying().getSocketOut().println("Client " + game.getUser2().getPseudo() + " est en train de jouer...");
                                         game.getUserPlaying().getSocketOut().flush();
-                                        //TODO remplacer par ficher questionQuiz.properties
-                                        game.getUser2().getSocketOut().println("Combien y a-t-il de langues de travail à l’ONU et quelles sont-elles ? \n1 : l’anglais \n2 : l’anglais et l’espagnol \n3 : l’anglais et le français \n4 : l’anglais, le chinois, le français et le russe");
+
+                                        //modifier la parametre userPlaying pour changer le client joué
+                                        game.setUserPlaying(game.getUser2());
+
+                                        //preparer des question pour le jeu
+                                        String question = prepareQuestions(game);
+                                        game.getUser2().getSocketOut().println(question);
                                         game.getUser2().getSocketOut().println("Entrez votre réponse:");
                                         game.getUser2().getSocketOut().flush();
-                                        game.setUserPlaying(game.getUser2());
+
                                     }else {
                                     //si le deuxieme client fini son tour, le leu est terminé
                                         if(game.getScoreUser1() > game.getScoreUser2()) {
@@ -583,7 +591,13 @@ public class Server {
                                             game.getUser2().getSocketOut().flush();
                                         }
 
+                                        game.getUser1().getSocketOut().println("Tapez \"play\" pour jouer le jeu...");
+                                        game.getUser1().getSocketOut().flush();
+                                        game.getUser2().getSocketOut().println("Tapez \"play\" pour jouer le jeu...");
+                                        game.getUser2().getSocketOut().flush();
+
                                         System.out.println("GAME BETWEEN " + game.getUser1().getPseudo() + " AND " + game.getUser2().getPseudo() + " IS OVER");
+
                                        //enleve le jeu de la liste gamesList et deplacer les client dans la liste usersConnectedList
                                         addUserToList(game.getUser1(), usersConnectedList);
                                         addUserToList(game.getUser2(), usersConnectedList);
@@ -597,7 +611,8 @@ public class Server {
                     }
                 } catch(IOException ex) {
                     //ex.printStackTrace();
-                    //Todo enlever l'utilisateur quand il est disconnected
+                    //Todo gerer le cas si client est deconnecte
+                    System.out.println("CLIENT DISCONNECT");
                 }
             }
         }).start();
@@ -676,6 +691,32 @@ public class Server {
             }
         }
         return null;
+    }
+
+    /**
+     * preparer des questions pour chaque client
+     * @param game
+     */
+    private String prepareQuestions(Game game){
+        //tirer au sort une question
+        Random r = new Random();
+        int numeroquestion = r.nextInt(3) + 1;
+        System.out.println("numeroquestion " + numeroquestion);
+        game.setNbrQuestionUserPlaying(numeroquestion);
+        ConfigurationFileProperties questionQuiz = new ConfigurationFileProperties("Servers/src/main/java/QuestionQuiz.properties");
+        System.out.println("question" + Integer.toString(game.getNbrQuestionUserPlaying()));
+        return questionQuiz.getValue("question" + Integer.toString(game.getNbrQuestionUserPlaying()));
+    };
+
+    /**
+     * recuperer la reponse qui correspond la question du client
+     * @param game
+     * @return
+     */
+    private String getResponse(Game game) {
+        ConfigurationFileProperties responseQuiz = new ConfigurationFileProperties("Servers/src/main/java/QuestionQuiz.properties");
+        System.out.println("response" + Integer.toString(game.getNbrQuestionUserPlaying()));
+        return responseQuiz.getValue("response" + Integer.toString(game.getNbrQuestionUserPlaying()));
     }
 
     /***************************************************************************************************************/

@@ -52,7 +52,6 @@ public class User {
      * @param port
      */
     public void connectServer(String addressServer, int port){
-        String ackServer;
         try {
             this.socket = new Socket(addressServer, port);
             final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -62,7 +61,7 @@ public class User {
             out.println("C:" + this.pseudo + ":CONNECT:" + "");
             out.flush();
 
-            //creer un thread pour recupere les messages du serveur
+            //creer un thread pour recuperer les messages du serveur
             new Thread(new Runnable() {
                 public void run() {
                     String ackServer;
@@ -71,7 +70,8 @@ public class User {
                             System.out.println(ackServer);
                         }
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        //TODO gere le cas si le serveur est mort
+                        System.out.println("serveur est mort");
                     }
                 }
             }).start();

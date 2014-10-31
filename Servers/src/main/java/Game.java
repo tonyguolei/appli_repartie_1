@@ -5,17 +5,20 @@ public class Game {
     private User user1;
     private User userPlaying;
     private User user2;
-    private int ScoreUser1;
-    private int ScoreUser2;
+    private int scoreUser1;
+    private int scoreUser2;
     private int tourUser1;
     private int tourUser2;
+    private int nbrQuestionUser1;
+    private int nbrQuestionUser2;
+
 
     public Game(User user1, User user2) {
         this.user1 = user1;
         this.user2 = user2;
         this.userPlaying = user1;
-        this.ScoreUser1 = 0;
-        this.ScoreUser2 = 0;
+        this.scoreUser1 = 0;
+        this.scoreUser2 = 0;
         this.tourUser1 = 0;
         this.tourUser2 = 0;
     }
@@ -28,29 +31,47 @@ public class Game {
         }
     }
 
-    public void setTourUserPlaying(int userPlayingTour) {
+    public void setTourUserPlaying(int tourUserPlaying) {
         if(userPlaying == user1) {
-            tourUser1 = userPlayingTour;
+            tourUser1 = tourUserPlaying;
         }else{
-            tourUser2 = userPlayingTour;
+            tourUser2 = tourUserPlaying;
         }
     }
 
     public int getScoreUserPlaying() {
         if(userPlaying == user1) {
-            return ScoreUser1;
+            return scoreUser1;
         }else{
-            return ScoreUser2;
+            return scoreUser2;
         }
     }
 
-    public void setScoreUserPlaying(int userPlayingScore) {
+    public void setScoreUserPlaying(int scoreUserPlaying) {
         if(userPlaying == user1) {
-            ScoreUser1 = userPlayingScore;
+            scoreUser1 = scoreUserPlaying;
         }else{
-            ScoreUser2 = userPlayingScore;
+            scoreUser2 = scoreUserPlaying;
         }
     }
+
+    public int getNbrQuestionUserPlaying() {
+        if(userPlaying == user1) {
+            return nbrQuestionUser1;
+        }else{
+            return nbrQuestionUser2;
+        }
+    }
+
+    public void setNbrQuestionUserPlaying(int nbrQuestionUserPlaying) {
+        if(userPlaying == user1) {
+            nbrQuestionUser1 = nbrQuestionUserPlaying;
+        }else{
+            nbrQuestionUser2 = nbrQuestionUserPlaying;
+        }
+    }
+
+
 
     /**
      *
@@ -89,7 +110,7 @@ public class Game {
      * @return
      */
     public int getScoreUser1() {
-        return ScoreUser1;
+        return scoreUser1;
     }
 
     /**
@@ -97,7 +118,7 @@ public class Game {
      * @param scoreUser1
      */
     public void setScoreUser1(int scoreUser1) {
-        ScoreUser1 = scoreUser1;
+        this.scoreUser1 = scoreUser1;
     }
 
     /**
@@ -105,7 +126,7 @@ public class Game {
      * @return
      */
     public int getScoreUser2() {
-        return ScoreUser2;
+        return scoreUser2;
     }
 
     /**
@@ -113,7 +134,7 @@ public class Game {
      * @param scoreUser2
      */
     public void setScoreUser2(int scoreUser2) {
-        ScoreUser2 = scoreUser2;
+        this.scoreUser2 = scoreUser2;
     }
 
     public int getTourUser1() {
@@ -138,6 +159,22 @@ public class Game {
 
     public void setUserPlaying(User userPlaying) {
         this.userPlaying = userPlaying;
+    }
+
+    public int getNbrQuestionUser1() {
+        return nbrQuestionUser1;
+    }
+
+    public void setNbrQuestionUser1(int nbrQuestionUser1) {
+        this.nbrQuestionUser1 = nbrQuestionUser1;
+    }
+
+    public int getNbrQuestionUser2() {
+        return nbrQuestionUser2;
+    }
+
+    public void setNbrQuestionUser2(int nbrQuestionUser2) {
+        this.nbrQuestionUser2 = nbrQuestionUser2;
     }
 }
 
