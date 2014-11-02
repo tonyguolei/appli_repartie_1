@@ -12,7 +12,11 @@ public class Game {
     private int nbrQuestionUser1;
     private int nbrQuestionUser2;
 
-
+    /**
+     * Cree un objet Game composé de deux utilisateurs
+     * @param user1
+     * @param user2
+     */
     public Game(User user1, User user2) {
         this.user1 = user1;
         this.user2 = user2;
@@ -70,8 +74,6 @@ public class Game {
             nbrQuestionUser2 = nbrQuestionUserPlaying;
         }
     }
-
-
 
     /**
      *

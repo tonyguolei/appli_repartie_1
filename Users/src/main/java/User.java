@@ -1,11 +1,11 @@
 /**
  * Created by tonyguolei on 10/15/2014.
  */
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
 
 public class User {
@@ -14,10 +14,13 @@ public class User {
     private Socket socket;
     private String addressServer;
     private int portServer;
+    private static HashMap<Integer,String> mapServer = new HashMap<Integer,String>();
+    static
+    {
+        //Initialisation liste serveurs
+        saveListServer();
+    }
 
-    /**
-     *
-     */
     public User(){}
 
     /**
@@ -26,26 +29,40 @@ public class User {
      */
     public String createPseudo() {
         String pseudo;
-        String pseudo_vefify;
+        //String pseudo_verify;
         Scanner reader = new Scanner(System.in);
-        do{
-            System.out.println("Entrez votre pseudo: ");
+
+        //do{
+            System.out.println("Pour se connecter, entrez votre pseudo: ");
             pseudo = reader.nextLine();
-            System.out.println("Entrez encore une fois votre pseudo: ");
-            pseudo_vefify = reader.nextLine();
-        }while(!pseudo.equals(pseudo_vefify));
+            //System.out.println("Entrez de nouveau votre pseudo: ");
+            //pseudo_verify = reader.nextLine();
+        //}while(!pseudo.equals(pseudo_verify));
         return pseudo;
     }
 
+    public static void saveListServer() {
+        int nbLine = 0;
+        ConfigurationFileProperties fileS = new ConfigurationFileProperties
+                ("Users/src/main/java/ConfigServer.properties");
+        do{
+            nbLine++;
+            mapServer.put(nbLine,fileS.getValue("addressServer" + nbLine)+":"
+                    +fileS.getValue("portServer" + nbLine));
+        }
+        while(fileS.getValue("addressServer"+(nbLine+1)) != "");
+    }
+
     /**
-     * configuration les parametres du server en lisant le ficher ConfigServer.propertie
+     * Modifie l'adresse et le port du serveur connu à contacter
      * @param nbrServer
      */
     public void configureServer(int nbrServer) {
-        ConfigurationFileProperties configServer = new ConfigurationFileProperties("Users/src/main/java/ConfigServer.properties");
-        addressServer = configServer.getValue("addressServer" + Integer.toString(nbrServer));
-        portServer = Integer.parseInt(configServer.getValue("portServer" + Integer.toString(nbrServer)));
+        String[] detailS = mapServer.get(nbrServer).split(":");
+        addressServer = detailS[0];
+        portServer = Integer.parseInt(detailS[1]);
     }
+
     /**
      * connecter au server
      * @param addressServer
@@ -71,7 +88,7 @@ public class User {
                         }
                     } catch (IOException e) {
                         //TODO gere le cas si le serveur est mort
-                        System.out.println("serveur est mort");
+                        System.out.println("deconnexion client ou serveur est mort ?!");
                     }
                 }
             }).start();
@@ -82,17 +99,17 @@ public class User {
                 String msg = reader.nextLine();
 
                 if (msg.equals("quit")) {
-                    //si user tape "quit", il va deconnecter
+                    //demande de deconnexion
                     out.println("C:" + this.pseudo + ":DISCONNECT:" + "");
                     out.flush();
                     break;
                 }else if (msg.equals("play")){
-                    //si user tape "play", il va jouer le jeu
+                    //demande de lancement du jeu
                     out.println("C:" + this.pseudo + ":PLAY:" + "");
                     out.flush();
                 }
                 else {
-                    // sinon, c'est le message pour la reponse du jeu
+                    //reponse a la question posee
                     out.println("C:" + this.pseudo + ":RESPONSE:" + msg);
                     out.flush();
                 }
