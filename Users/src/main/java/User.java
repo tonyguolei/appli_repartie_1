@@ -87,7 +87,7 @@ public class User {
                             System.out.println(ackServer);
                         }
                     } catch (IOException e) {
-                        //TODO gere le cas si le serveur est mort
+                        //TODO gere le cas si le serveur est mort ou deconnexion client!
                         System.out.println("deconnexion client ou serveur est mort ?!");
                     }
                 }
