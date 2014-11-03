@@ -1,6 +1,7 @@
 /**
  * Created by tonyguolei on 10/15/2014.
  */
+
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -14,30 +15,23 @@ public class User {
     private Socket socket;
     private String addressServer;
     private int portServer;
-    private static HashMap<Integer,String> mapServer = new HashMap<Integer,String>();
-    static
-    {
+    private static HashMap<Integer, String> mapServer = new HashMap<Integer, String>();
+    static {
         //Initialisation liste serveurs
         saveListServer();
     }
 
-    public User(){}
+    public User() {
+    }
 
     /**
-     *
      * @return
      */
     public String createPseudo() {
-        String pseudo;
-        //String pseudo_verify;
+        String pseudo = "";
         Scanner reader = new Scanner(System.in);
-
-        //do{
-            System.out.println("Pour se connecter, entrez votre pseudo: ");
-            pseudo = reader.nextLine();
-            //System.out.println("Entrez de nouveau votre pseudo: ");
-            //pseudo_verify = reader.nextLine();
-        //}while(!pseudo.equals(pseudo_verify));
+        System.out.println("Pour se connecter, entrez votre pseudo: ");
+        pseudo = reader.nextLine();
         return pseudo;
     }
 
@@ -45,16 +39,17 @@ public class User {
         int nbLine = 0;
         ConfigurationFileProperties fileS = new ConfigurationFileProperties
                 ("Users/src/main/java/ConfigServer.properties");
-        do{
+        do {
             nbLine++;
-            mapServer.put(nbLine,fileS.getValue("addressServer" + nbLine)+":"
-                    +fileS.getValue("portServer" + nbLine));
+            mapServer.put(nbLine, fileS.getValue("addressServer" + nbLine) + ":"
+                    + fileS.getValue("portServer" + nbLine));
         }
-        while(fileS.getValue("addressServer"+(nbLine+1)) != "");
+        while (fileS.getValue("addressServer" + (nbLine + 1)) != "");
     }
 
     /**
      * Modifie l'adresse et le port du serveur connu à contacter
+     *
      * @param nbrServer
      */
     public void configureServer(int nbrServer) {
@@ -65,10 +60,11 @@ public class User {
 
     /**
      * connecter au server
+     *
      * @param addressServer
      * @param port
      */
-    public void connectServer(String addressServer, int port){
+    public void connectServer(String addressServer, int port) {
         try {
             this.socket = new Socket(addressServer, port);
             final BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -83,7 +79,7 @@ public class User {
                 public void run() {
                     String ackServer;
                     try {
-                        while((ackServer = in.readLine()) != null){
+                        while ((ackServer = in.readLine()) != null) {
                             System.out.println(ackServer);
                         }
                     } catch (IOException e) {
@@ -103,25 +99,23 @@ public class User {
                     out.println("C:" + this.pseudo + ":DISCONNECT:" + "");
                     out.flush();
                     break;
-                }else if (msg.equals("play")){
+                } else if (msg.equals("play")) {
                     //demande de lancement du jeu
                     out.println("C:" + this.pseudo + ":PLAY:" + "");
                     out.flush();
-                }
-                else {
+                } else {
                     //reponse a la question posee
                     out.println("C:" + this.pseudo + ":RESPONSE:" + msg);
                     out.flush();
                 }
             }
             socket.close();
-        }catch(IOException ex){
+        } catch (IOException ex) {
             System.out.println("Can't connect server");
         }
     }
 
     /**
-     *
      * @return
      */
     public String getPseudo() {
@@ -129,7 +123,6 @@ public class User {
     }
 
     /**
-     *
      * @param pseudo
      */
     public void setPseudo(String pseudo) {
@@ -137,7 +130,6 @@ public class User {
     }
 
     /**
-     *
      * @return
      */
     public Socket getSocket() {
@@ -145,7 +137,6 @@ public class User {
     }
 
     /**
-     *
      * @param socket
      */
     public void setSocket(Socket socket) {

@@ -14,6 +14,7 @@ public class Game {
 
     /**
      * Cree un objet Game composé de deux utilisateurs
+     *
      * @param user1
      * @param user2
      */
@@ -28,55 +29,54 @@ public class Game {
     }
 
     public int getTourUserPlaying() {
-        if(userPlaying == user1) {
+        if (userPlaying == user1) {
             return tourUser1;
-        }else{
+        } else {
             return tourUser2;
         }
     }
 
     public void setTourUserPlaying(int tourUserPlaying) {
-        if(userPlaying == user1) {
+        if (userPlaying == user1) {
             tourUser1 = tourUserPlaying;
-        }else{
+        } else {
             tourUser2 = tourUserPlaying;
         }
     }
 
     public int getScoreUserPlaying() {
-        if(userPlaying == user1) {
+        if (userPlaying == user1) {
             return scoreUser1;
-        }else{
+        } else {
             return scoreUser2;
         }
     }
 
     public void setScoreUserPlaying(int scoreUserPlaying) {
-        if(userPlaying == user1) {
+        if (userPlaying == user1) {
             scoreUser1 = scoreUserPlaying;
-        }else{
+        } else {
             scoreUser2 = scoreUserPlaying;
         }
     }
 
     public int getNbrQuestionUserPlaying() {
-        if(userPlaying == user1) {
+        if (userPlaying == user1) {
             return nbrQuestionUser1;
-        }else{
+        } else {
             return nbrQuestionUser2;
         }
     }
 
     public void setNbrQuestionUserPlaying(int nbrQuestionUserPlaying) {
-        if(userPlaying == user1) {
+        if (userPlaying == user1) {
             nbrQuestionUser1 = nbrQuestionUserPlaying;
-        }else{
+        } else {
             nbrQuestionUser2 = nbrQuestionUserPlaying;
         }
     }
 
     /**
-     *
      * @return
      */
     public User getUser1() {
@@ -84,7 +84,6 @@ public class Game {
     }
 
     /**
-     *
      * @param user1
      */
     public void setUser1(User user1) {
@@ -92,7 +91,6 @@ public class Game {
     }
 
     /**
-     *
      * @return
      */
     public User getUser2() {
@@ -100,7 +98,6 @@ public class Game {
     }
 
     /**
-     *
      * @param user2
      */
     public void setUser2(User user2) {
@@ -108,7 +105,6 @@ public class Game {
     }
 
     /**
-     *
      * @return
      */
     public int getScoreUser1() {
@@ -116,7 +112,6 @@ public class Game {
     }
 
     /**
-     *
      * @param scoreUser1
      */
     public void setScoreUser1(int scoreUser1) {
@@ -124,7 +119,6 @@ public class Game {
     }
 
     /**
-     *
      * @return
      */
     public int getScoreUser2() {
@@ -132,7 +126,6 @@ public class Game {
     }
 
     /**
-     *
      * @param scoreUser2
      */
     public void setScoreUser2(int scoreUser2) {

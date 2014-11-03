@@ -1,6 +1,7 @@
 /**
  * Created by tonyguolei on 10/30/2014.
  */
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -9,7 +10,6 @@ import java.util.Properties;
 
 /**
  * lire le fichier .properties
- *
  */
 public class ConfigurationFileProperties {
     private Properties propertie;
@@ -43,7 +43,6 @@ public class ConfigurationFileProperties {
     }
 
     /**
-     *
      * @param key
      * @return key
      */
