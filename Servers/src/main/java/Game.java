@@ -7,8 +7,6 @@ public class Game {
     private User user2;
     private int scoreUser1;
     private int scoreUser2;
-    private int tourUser1;
-    private int tourUser2;
     private int nbrQuestionUser1;
     private int nbrQuestionUser2;
 
@@ -24,24 +22,8 @@ public class Game {
         this.userPlaying = user1;
         this.scoreUser1 = 0;
         this.scoreUser2 = 0;
-        this.tourUser1 = 0;
-        this.tourUser2 = 0;
-    }
-
-    public int getTourUserPlaying() {
-        if (userPlaying == user1) {
-            return tourUser1;
-        } else {
-            return tourUser2;
-        }
-    }
-
-    public void setTourUserPlaying(int tourUserPlaying) {
-        if (userPlaying == user1) {
-            tourUser1 = tourUserPlaying;
-        } else {
-            tourUser2 = tourUserPlaying;
-        }
+        this.nbrQuestionUser1 = 0;
+        this.nbrQuestionUser2 = 0;
     }
 
     public int getScoreUserPlaying() {
@@ -130,22 +112,6 @@ public class Game {
      */
     public void setScoreUser2(int scoreUser2) {
         this.scoreUser2 = scoreUser2;
-    }
-
-    public int getTourUser1() {
-        return tourUser1;
-    }
-
-    public void setTourUser1(int tourUser1) {
-        this.tourUser1 = tourUser1;
-    }
-
-    public int getTourUser2() {
-        return tourUser2;
-    }
-
-    public void setTourUser2(int tourUser2) {
-        this.tourUser2 = tourUser2;
     }
 
     public User getUserPlaying() {

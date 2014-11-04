@@ -48,7 +48,7 @@ public class Server {
      * *********GESTION DES UTILISATEURS*******
      */
     /* Liste contenant les utilisateurs connectés mais inactifs */
-    private Hashtable<String,User> usersConnectedList = new Hashtable<String,User>();
+    private Hashtable<String,User> usersConnectedTable = new Hashtable<String,User>();
     /* Utilisateur en attente d'un adversaire */
     private User userWait;
     /* Liste contenant les jeux en cours */
@@ -464,7 +464,7 @@ public class Server {
             case "CONNECT":
                 System.out.println("Client " + client + " CONNECTED");
                 //ajoute dans la liste des utilisateurs connectés
-                addUserToList(new User(client, userSocket, Status.CONNECTED), usersConnectedList);
+                addUserTable(new User(client, userSocket, Status.CONNECTED), usersConnectedTable);
                 //Menu client
                 out.println("============================");
                 out.println("|   Bienvenue " + client + "           |");
@@ -481,15 +481,15 @@ public class Server {
                     //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
                     out.println("En attente d'un joueur...");
                     out.flush();
-                    User user1 = findUserFromList(client, usersConnectedList);
-                    removeUserFromList(user1, usersConnectedList);
+                    User user1 = findUserFromTable(client, usersConnectedTable);
+                    removeUserFromTable(user1, usersConnectedTable);
                     userWait = user1;
                 } else {
                     //s'il y a un client également en attente, le jeu peut commencer
                     User user1 = userWait;
                     userWait = null;
-                    User user2 = findUserFromList(client, usersConnectedList);
-                    removeUserFromList(user2, usersConnectedList);
+                    User user2 = findUserFromTable(client, usersConnectedTable);
+                    removeUserFromTable(user2, usersConnectedTable);
                     Game game = new Game(user1, user2);
                     addGameToGameList(game);
 
@@ -518,12 +518,12 @@ public class Server {
                 if (contenu.equals(response)) {
                     game.getUserPlaying().getSocketOut().println("Réponse correcte");
                     game.getUserPlaying().getSocketOut().flush();
-                    game.setTourUserPlaying(game.getTourUserPlaying() + 1);
+                    game.setNbrQuestionUserPlaying(game.getNbrQuestionUserPlaying() + 1);
                     game.setScoreUserPlaying(game.getScoreUserPlaying() + 1);
                 } else {
                     game.getUserPlaying().getSocketOut().println("Réponse incorrecte");
                     game.getUserPlaying().getSocketOut().flush();
-                    game.setTourUserPlaying(game.getTourUserPlaying() + 1);
+                    game.setNbrQuestionUserPlaying(game.getNbrQuestionUserPlaying() + 1);
                 }
 
                 if (game.getUserPlaying() == game.getUser1()) {
@@ -564,9 +564,9 @@ public class Server {
                     System.out.println("GAME BETWEEN " + game.getUser1().getPseudo() + " AND " + game.getUser2().getPseudo() + " IS OVER");
 
                     //enlever le jeu de la liste gamesList
-                    //deplacer les client dans la liste usersConnectedList
-                    addUserToList(game.getUser1(), usersConnectedList);
-                    addUserToList(game.getUser2(), usersConnectedList);
+                    //deplacer les client dans la liste usersConnectedTable
+                    addUserTable(game.getUser1(), usersConnectedTable);
+                    addUserTable(game.getUser2(), usersConnectedTable);
                     removeGameFromGameList(game);
                 }
                 break;
@@ -593,7 +593,7 @@ public class Server {
             case "CONNECT":
                 System.out.println("Client " + client + " CONNECTED");
                 //ajoute dans la liste des utilisateurs connectés
-                addUserToList(new User(client, userSocket, Status.CONNECTED), usersConnectedList);
+                addUserTable(new User(client, userSocket, Status.CONNECTED), usersConnectedTable);
                 break;
             case "DISCONNECT":
                 System.out.println("Client " + client + " DISCONNECTED");
@@ -602,15 +602,15 @@ public class Server {
                 System.out.println("Client " + client + " ASK FOR PLAYING");
                 if (userWait == null) {
                     //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
-                    User user1 = findUserFromList(client, usersConnectedList);
-                    removeUserFromList(user1, usersConnectedList);
+                    User user1 = findUserFromTable(client, usersConnectedTable);
+                    removeUserFromTable(user1, usersConnectedTable);
                     userWait = user1;
                 } else {
                     //s'il y a un client également en attente, le jeu peut commencer
                     User user1 = userWait;
                     userWait = null;
-                    User user2 = findUserFromList(client, usersConnectedList);
-                    removeUserFromList(user2, usersConnectedList);
+                    User user2 = findUserFromTable(client, usersConnectedTable);
+                    removeUserFromTable(user2, usersConnectedTable);
                     Game game = new Game(user1, user2);
                     addGameToGameList(game);
 
@@ -628,10 +628,10 @@ public class Server {
 
                 //recuperer la reponse du client et traiter la reponse
                 if (contenu.equals(response)) {
-                    game.setTourUserPlaying(game.getTourUserPlaying() + 1);
+                    game.setNbrQuestionUserPlaying(game.getNbrQuestionUserPlaying() + 1);
                     game.setScoreUserPlaying(game.getScoreUserPlaying() + 1);
                 } else {
-                    game.setTourUserPlaying(game.getTourUserPlaying() + 1);
+                    game.setNbrQuestionUserPlaying(game.getNbrQuestionUserPlaying() + 1);
                 }
 
                 if (game.getUserPlaying() == game.getUser1()) {
@@ -640,9 +640,9 @@ public class Server {
                     game.setUserPlaying(game.getUser2());
                 } else {
                     System.out.println("GAME BETWEEN " + game.getUser1().getPseudo() + " AND " + game.getUser2().getPseudo() + " IS OVER");
-                    //enleve le jeu de la liste gamesList et deplacer les client dans la liste usersConnectedList
-                    addUserToList(game.getUser1(), usersConnectedList);
-                    addUserToList(game.getUser2(), usersConnectedList);
+                    //enleve le jeu de la liste gamesList et deplacer les client dans la liste usersConnectedTable
+                    addUserTable(game.getUser1(), usersConnectedTable);
+                    addUserTable(game.getUser2(), usersConnectedTable);
                     removeGameFromGameList(game);
                 }
                 break;
@@ -672,11 +672,11 @@ public class Server {
     /**
      * Ajouter utilisateur dans une collection
      * @param user
-     * @param listUser
+     * @param tableUser
      */
-    private void addUserToList(User user, Hashtable<String,User> listUser) {
-        listUser.put(user.getPseudo(),user);
-        if (listUser.toString().equals(usersConnectedList)) {
+    private void addUserTable(User user, Hashtable<String, User> tableUser) {
+        tableUser.put(user.getPseudo(),user);
+        if (tableUser.toString().equals(usersConnectedTable)) {
             user.setStatus(Status.CONNECTED);
         }
     }
@@ -684,22 +684,22 @@ public class Server {
     /**
      * Enlever l'utilisateur d'une collection
      * @param user
-     * @param listUser
+     * @param tableUser
      */
-    private void removeUserFromList(User user, Hashtable<String,User> listUser) {
-        listUser.remove(user.getPseudo());
+    private void removeUserFromTable(User user, Hashtable<String, User> tableUser) {
+        tableUser.remove(user.getPseudo());
     }
 
     /**
      * Chercher un utilisateur d'une collection
      *
      * @param pseudo
-     * @param listUser
+     * @param tableUser
      * @return l'utilisateur trouvé
      */
-    private User findUserFromList(String pseudo, Hashtable<String,User> listUser) {
-        if (listUser.containsKey(pseudo)){
-            return listUser.get(pseudo);
+    private User findUserFromTable(String pseudo, Hashtable<String, User> tableUser) {
+        if (tableUser.containsKey(pseudo)){
+            return tableUser.get(pseudo);
         }
         return null;
     }
