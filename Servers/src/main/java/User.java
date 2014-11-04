@@ -12,6 +12,7 @@ public class User {
     private Socket socket;
     private Status status;
     private PrintWriter socketOut;
+    private String gameKey;
 
     /**
      * Crée un utilisateur
@@ -76,11 +77,35 @@ public class User {
         this.status = status;
     }
 
+    /**
+     *
+     * @return
+     */
     public PrintWriter getSocketOut() {
         return socketOut;
     }
 
+    /**
+     *
+     * @param socketOut
+     */
     public void setSocketOut(PrintWriter socketOut) {
         this.socketOut = socketOut;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public String getGameKey() {
+        return gameKey;
+    }
+
+    /**
+     *
+     * @param gameKey
+     */
+    public void setGameKey(String gameKey) {
+        this.gameKey = gameKey;
     }
 }
