@@ -670,15 +670,6 @@ public class Server {
     /************************************************GESTION DES UTILISATEURS***************************************/
 
     /**
-     * Recuperer le premier utilisateur en attente
-     * @return utilisateur
-     */
-    /*private User getFirstUserWait(){
-        String keyFirst = usersWaitList.keySet().iterator().next();
-        return usersWaitList.get(keyFirst);
-    }*/
-
-    /**
      * Ajouter utilisateur dans une collection
      * @param user
      * @param listUser
@@ -687,9 +678,7 @@ public class Server {
         listUser.put(user.getPseudo(),user);
         if (listUser.toString().equals(usersConnectedList)) {
             user.setStatus(Status.CONNECTED);
-        } /*else if (listUser.toString().equals(usersWaitList)) {
-            user.setStatus(Status.WAIT);
-        }*/
+        }
     }
 
     /**
