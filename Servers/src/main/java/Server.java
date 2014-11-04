@@ -48,14 +48,12 @@ public class Server {
      * *********GESTION DES UTILISATEURS*******
      */
     /* Liste contenant les utilisateurs connectés mais inactifs */
-    //private List<User> usersConnectedList = new ArrayList<User>();
-    private HashMap<String, User> usersConnectedList = new LinkedHashMap<String, User>();
-    /* Liste contenant les utilisateurs en attente d'un adversaire */
-    //private List<User> usersWaitList = new ArrayList<User>();
-    private HashMap<String, User> usersWaitList = new LinkedHashMap<String, User>();
+    private Hashtable<String,User> usersConnectedList = new Hashtable<String,User>();
+    /* Utilisateur en attente d'un adversaire */
+    private User userWait;
     /* Liste contenant les jeux en cours */
     private List<Game> gamesList = new ArrayList<Game>();
-    //TODO changer la structure !!! TROP COUTEUX
+    //TODO changer la structure !!! TROP COUTEUX au niveau des remove!
 
     /**
      * ********GESTION DES FLUX***************
@@ -155,7 +153,6 @@ public class Server {
             }
         }).start();
     }
-
 
     /**
      * Permet la lecture du fichier de configuration des serveurs
@@ -480,17 +477,17 @@ public class Server {
                 break;
             case "PLAY":
                 System.out.println("Client " + client + " ASK FOR PLAYING");
-                if (usersWaitList.isEmpty()) {
+                if (userWait == null) {
                     //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
                     out.println("En attente d'un joueur...");
                     out.flush();
                     User user1 = findUserFromList(client, usersConnectedList);
                     removeUserFromList(user1, usersConnectedList);
-                    addUserToList(user1, usersWaitList);
+                    userWait = user1;
                 } else {
                     //s'il y a un client également en attente, le jeu peut commencer
-                    User user1 = getFirstUserWait();
-                    removeUserFromList(user1, usersWaitList);
+                    User user1 = userWait;
+                    userWait = null;
                     User user2 = findUserFromList(client, usersConnectedList);
                     removeUserFromList(user2, usersConnectedList);
                     Game game = new Game(user1, user2);
@@ -564,7 +561,6 @@ public class Server {
                     game.getUser1().getSocketOut().flush();
                     game.getUser2().getSocketOut().print(getMenuUser());
                     game.getUser2().getSocketOut().flush();
-
                     System.out.println("GAME BETWEEN " + game.getUser1().getPseudo() + " AND " + game.getUser2().getPseudo() + " IS OVER");
 
                     //enlever le jeu de la liste gamesList
@@ -598,28 +594,21 @@ public class Server {
                 System.out.println("Client " + client + " CONNECTED");
                 //ajoute dans la liste des utilisateurs connectés
                 addUserToList(new User(client, userSocket, Status.CONNECTED), usersConnectedList);
-                //envoyer ack au client
-                                           /* out.println("Tu es connecté au server");
-                                            out.println("Tapez \"play\" pour jouer le jeu...");
-                                            out.flush();*/
                 break;
             case "DISCONNECT":
                 System.out.println("Client " + client + " DISCONNECTED");
-                                           /* userSocket.close();*/
                 break;
             case "PLAY":
                 System.out.println("Client " + client + " ASK FOR PLAYING");
-                if (usersWaitList.isEmpty()) {
+                if (userWait == null) {
                     //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
-                                               /* out.println("Vous etre en train d'attendre un autre joueur...");
-                                                out.flush(); */
                     User user1 = findUserFromList(client, usersConnectedList);
                     removeUserFromList(user1, usersConnectedList);
-                    addUserToList(user1, usersWaitList);
+                    userWait = user1;
                 } else {
                     //s'il y a un client également en attente, le jeu peut commencer
-                    User user1 = getFirstUserWait();
-                    removeUserFromList(user1, usersWaitList);
+                    User user1 = userWait;
+                    userWait = null;
                     User user2 = findUserFromList(client, usersConnectedList);
                     removeUserFromList(user2, usersConnectedList);
                     Game game = new Game(user1, user2);
@@ -631,13 +620,6 @@ public class Server {
                     //informer au clients pour commencer le jeu (le jeu commence par le client qui attend)
                     System.out.println("Client " + user1.getPseudo() + " IS PLAYING THE GAME");
                     System.out.println("Client " + user2.getPseudo() + " IS PLAYING THE GAME");
-                                              /*  user1.getSocketOut().println("C'est parti !!!");
-                                                user1.getSocketOut().println(question);
-                                                user1.getSocketOut().println("Entrez votre réponse:");
-                                                user1.getSocketOut().flush();
-                                                out.println("C'est parti !!!");
-                                                out.println("Attendez! Client " + user1.getPseudo() + " est en train de jouer...");
-                                                out.flush();*/
                 }
                 break;
             case "RESPONSE":
@@ -646,57 +628,18 @@ public class Server {
 
                 //recuperer la reponse du client et traiter la reponse
                 if (contenu.equals(response)) {
-                                              /*  game.getUserPlaying().getSocketOut().println("votre reponse est correct");
-                                                game.getUserPlaying().getSocketOut().flush();*/
                     game.setTourUserPlaying(game.getTourUserPlaying() + 1);
                     game.setScoreUserPlaying(game.getScoreUserPlaying() + 1);
                 } else {
-                                              /*  game.getUserPlaying().getSocketOut().println("votre reponse est faux");
-                                                game.getUserPlaying().getSocketOut().flush();*/
                     game.setTourUserPlaying(game.getTourUserPlaying() + 1);
                 }
 
-
                 if (game.getUserPlaying() == game.getUser1()) {
                     //si le premier client fini son tour, l'autre client va commencer son tour
-                                               /* game.getUserPlaying().getSocketOut().println("Client " + game.getUser2().getPseudo() + " est en train de jouer...");
-                                                game.getUserPlaying().getSocketOut().flush();*/
-
                     //modifier la parametre userPlaying pour changer le client joué
                     game.setUserPlaying(game.getUser2());
-
-                    //preparer des question pour le jeu
-                                              /*  String question = prepareQuestions(game);
-                                                game.getUser2().getSocketOut().println(question);
-                                                game.getUser2().getSocketOut().println("Entrez votre réponse:");
-                                                game.getUser2().getSocketOut().flush();*/
-
                 } else {
-                    //si le deuxieme client fini son tour, le leu est terminé
-                                              /*  if(game.getScoreUser1() > game.getScoreUser2()) {
-                                                    game.getUser1().getSocketOut().println("Vous avez gagné !!!");
-                                                    game.getUser1().getSocketOut().flush();
-                                                    game.getUser2().getSocketOut().println("Vous avez perdu !!!");
-                                                    game.getUser2().getSocketOut().flush();
-                                                }else if(game.getScoreUser1() < game.getScoreUser2()){
-                                                    game.getUser1().getSocketOut().println("Vous avez perdu !!!");
-                                                    game.getUser1().getSocketOut().flush();
-                                                    game.getUser2().getSocketOut().println("Vous avez gagné !!!");
-                                                    game.getUser2().getSocketOut().flush();
-                                                }else {
-                                                    game.getUser1().getSocketOut().println("Match nul !!!");
-                                                    game.getUser1().getSocketOut().flush();
-                                                    game.getUser2().getSocketOut().println("Match nul !!!");
-                                                    game.getUser2().getSocketOut().flush();
-                                                } */
-
-                                             /*   game.getUser1().getSocketOut().println("Tapez \"play\" pour jouer le jeu...");
-                                                game.getUser1().getSocketOut().flush();
-                                                game.getUser2().getSocketOut().println("Tapez \"play\" pour jouer le jeu...");
-                                                game.getUser2().getSocketOut().flush();*/
-
                     System.out.println("GAME BETWEEN " + game.getUser1().getPseudo() + " AND " + game.getUser2().getPseudo() + " IS OVER");
-
                     //enleve le jeu de la liste gamesList et deplacer les client dans la liste usersConnectedList
                     addUserToList(game.getUser1(), usersConnectedList);
                     addUserToList(game.getUser2(), usersConnectedList);
@@ -730,47 +673,45 @@ public class Server {
      * Recuperer le premier utilisateur en attente
      * @return utilisateur
      */
-    private User getFirstUserWait(){
+    /*private User getFirstUserWait(){
         String keyFirst = usersWaitList.keySet().iterator().next();
         return usersWaitList.get(keyFirst);
-    }
+    }*/
 
     /**
      * Ajouter utilisateur dans une collection
      * @param user
-     * @param mapUser
+     * @param listUser
      */
-    private void addUserToList(User user, HashMap<String,User> mapUser) {
-        mapUser.put(user.getPseudo(),user);
-        if (mapUser == usersConnectedList) {
+    private void addUserToList(User user, Hashtable<String,User> listUser) {
+        listUser.put(user.getPseudo(),user);
+        if (listUser.toString().equals(usersConnectedList)) {
             user.setStatus(Status.CONNECTED);
-        } else if (mapUser == usersWaitList) {
+        } /*else if (listUser.toString().equals(usersWaitList)) {
             user.setStatus(Status.WAIT);
-        }
+        }*/
     }
 
     /**
      * Enlever l'utilisateur d'une collection
      * @param user
-     * @param mapUser
+     * @param listUser
      */
-    private void removeUserFromList(User user, HashMap<String,User> mapUser) {
-        mapUser.remove(user.getPseudo());
+    private void removeUserFromList(User user, Hashtable<String,User> listUser) {
+        listUser.remove(user.getPseudo());
     }
 
     /**
      * Chercher un utilisateur d'une collection
      *
      * @param pseudo
-     * @param mapUser
+     * @param listUser
      * @return l'utilisateur trouvé
      */
-    private User findUserFromList(String pseudo, HashMap<String,User> mapUser) {
-        if (mapUser.containsKey(pseudo)){
-            System.out.println("User trouvé!");
-            return mapUser.get(pseudo);
+    private User findUserFromList(String pseudo, Hashtable<String,User> listUser) {
+        if (listUser.containsKey(pseudo)){
+            return listUser.get(pseudo);
         }
-        System.out.println("User pas trouvé!");
         return null;
     }
 
