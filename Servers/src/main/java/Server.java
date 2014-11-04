@@ -779,38 +779,6 @@ public class Server {
         return gamesTable.get(user.getGameKey());
     }
 
-/*    *//**
-     * @param game
-     *//*
-    private void addGameToGameList(Game game) {
-        this.gamesTable.add(game);
-        game.getUser1().setStatus(Status.PLAY);
-        game.getUser2().setStatus(Status.PLAY);
-    }
-
-    *//**
-     * @param game
-     *//*
-    private void removeGameFromGameList(Game game) {
-        this.gamesTable.remove(game);
-    }
-
-    *//**
-     * @param pseudo
-     * @return
-     *//*
-    private Game findGameFromGameList(String pseudo) {
-        for (Game game : this.gamesTable) {
-            if (game.getUser1().getPseudo().equals(pseudo)) {
-                return game;
-            }
-            if (game.getUser2().getPseudo().equals(pseudo)) {
-                return game;
-            }
-        }
-        return null;
-    }*/
-
     /**
      * preparer des questions pour chaque client
      *
