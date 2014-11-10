@@ -463,146 +463,162 @@ public class Server {
 
         switch (typemsg) {
             case "CONNECT":
-                System.out.println("Client " + client + " CONNECTED");
-                //ajoute dans la liste des utilisateurs connectés
-                addUserTable(new User(client, userSocket, Status.CONNECTED), usersConnectedTable);
-                //Menu client
-                out.println("============================");
-                out.println("|   Bienvenue " + client + "           |");
-                out.print(getMenuUser());
-                out.flush();
+                handleMsgConnectMaster(client, userSocket, out);
                 break;
             case "DISCONNECT":
-                System.out.println("Client " + client + " DISCONNECTED");
-                userSocket.close();
+                handleMsgDisconnectMaster(client, userSocket);
                 break;
             case "PLAY":
-                System.out.println("Client " + client + " ASK FOR PLAYING");
-                if (userWait == null) {
-                    //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
-                    out.println("En attente d'un joueur...");
-                    out.flush();
-                    User user1 = findUserFromTable(client, usersConnectedTable);
-                    removeUserFromTable(user1, usersConnectedTable);
-                    userWait = user1;
-                    user1.setStatus(Status.WAIT);
-                } else {
-                    //s'il y a un client également en attente, le jeu peut commencer
-                    //enlever user de userWait
-                    User user1 = userWait;
-                    userWait = null;
-
-                    //enlever user de la table usersConnectedTable
-                    User user2 = findUserFromTable(client, usersConnectedTable);
-                    removeUserFromTable(user2, usersConnectedTable);
-
-                    //add users dans playingTable
-                    addUserTable(user1, usersPlayingTable);
-                    addUserTable(user2, usersPlayingTable);
-
-                    //add users dans gameTable
-                    Game game = new Game(user1, user2);
-                    String gameKey = user1.getPseudo()+user2.getPseudo();
-                    user1.setGameKey(gameKey);
-                    user2.setGameKey(gameKey);
-                    addGameToGameTable(gameKey, game);
-
-                    //preparer des questions pour le client
-                    String question = prepareQuestions(game);
-                    //TODO fait Attention, ELOM ALICE
-                    //TODO le serveur master doit envoyer le nbrQuestion du client aux autres serveurs pour que les autres serveurs mettent a jour le nbrQuestion de ses cotes
-
-                    //informer le client pour commencer le jeu
-                    // (le jeu commence par le client qui attend)
-                    System.out.println("Client " + user1.getPseudo() + " IS PLAYING THE GAME");
-                    System.out.println("Client " + user2.getPseudo() + " IS PLAYING THE GAME");
-                    user1.getSocketOut().println("C'est parti !!!");
-                    user1.getSocketOut().println(question);
-                    user1.getSocketOut().println("Entrez votre réponse:");
-                    user1.getSocketOut().flush();
-                    out.println("C'est parti !!!");
-                    out.println("Merci de patienter. " +
-                            "Client " + user1.getPseudo() + " est en train de jouer...");
-                    out.flush();
-                }
+                handleMsgPlayMaster(client, userSocket, out);
                 break;
             case "RESPONSE":
-                Game game = findGameFromGameTable(client);
-                String response = getResponse(game);
-
-                //recuperer la reponse du client et traiter la reponse
-                if (contenu.equals(response)) {
-                    game.getUserPlaying().getSocketOut().println("Réponse correcte");
-                    game.getUserPlaying().getSocketOut().flush();
-                    game.setScoreUserPlaying(game.getScoreUserPlaying() + 1);
-                } else {
-                    game.getUserPlaying().getSocketOut().println("Réponse incorrecte");
-                    game.getUserPlaying().getSocketOut().flush();
-                }
-
-                if (game.getUserPlaying() == game.getUser1()) {
-                    //client1 a fini son tour, client2 va commencer son tour
-                    game.getUserPlaying().getSocketOut().println
-                            ("Client " + game.getUser2().getPseudo() + " est en train de jouer...");
-                    game.getUserPlaying().getSocketOut().flush();
-
-                    //modifier la parametre userPlaying pour changer le client joué
-                    game.setUserPlaying(game.getUser2());
-
-                    //preparer des question pour le jeu
-                    String question = prepareQuestions(game);
-                    //TODO fait Attention, ELOM ALICE
-                    //TODO le serveur master doit envoyer le nbrQuestion du client aux autres serveurs pour que les autres serveurs mettent a jour le nbrQuestion de ses cotes
-
-                    //envoyer la question au client
-                    game.getUser2().getSocketOut().println(question);
-                    game.getUser2().getSocketOut().println("Entrez votre réponse: ");
-                    game.getUser2().getSocketOut().flush();
-                } else {
-                    //si le deuxieme client fini son tour, le leu est terminé
-                    if (game.getScoreUser1() > game.getScoreUser2()) {
-                        game.getUser1().getSocketOut().println("Vous avez gagné !!!");
-                        game.getUser1().getSocketOut().flush();
-                        game.getUser2().getSocketOut().println("Vous avez perdu !!!");
-                        game.getUser2().getSocketOut().flush();
-                    } else if (game.getScoreUser1() < game.getScoreUser2()) {
-                        game.getUser1().getSocketOut().println("Vous avez perdu !!!");
-                        game.getUser1().getSocketOut().flush();
-                        game.getUser2().getSocketOut().println("Vous avez gagné !!!");
-                        game.getUser2().getSocketOut().flush();
-                    } else {
-                        game.getUser1().getSocketOut().println("Match nul !!!");
-                        game.getUser1().getSocketOut().flush();
-                        game.getUser2().getSocketOut().println("Match nul !!!");
-                        game.getUser2().getSocketOut().flush();
-                    }
-
-                    System.out.println("GAME BETWEEN " + game.getUser1().getPseudo() + " AND " + game.getUser2().getPseudo() + " IS OVER");
-
-                    User user1 = game.getUser1();
-                    User user2 = game.getUser2();
-                    //enlever le jeu de la table userPlayingTable
-                    removeUserFromTable(user1, usersPlayingTable);
-                    removeUserFromTable(user2, usersPlayingTable);
-
-                    //deplacer les client dans la liste usersConnectedTable
-                    addUserTable(user1, usersConnectedTable);
-                    addUserTable(user2, usersConnectedTable);
-
-                    //enlever le jeu de la table gamesTable
-                    removeGameFromGameTable(user1.getGameKey());
-                    user1.setGameKey(null);
-                    user2.setGameKey(null);
-
-                    //envoyer le menu au client
-                    game.getUser1().getSocketOut().print(getMenuUser());
-                    game.getUser1().getSocketOut().flush();
-                    game.getUser2().getSocketOut().print(getMenuUser());
-                    game.getUser2().getSocketOut().flush();
-                }
+                handleMsgResultMaster(client, contenu);
                 break;
             default:
                 break;
+        }
+    }
+
+    private void handleMsgConnectMaster(String client, final Socket userSocket, PrintWriter out){
+        System.out.println("Client " + client + " CONNECTED");
+        //ajoute dans la liste des utilisateurs connectés
+        addUserTable(new User(client, userSocket, Status.CONNECTED), usersConnectedTable);
+        //Menu client
+        out.println("============================");
+        out.println("|   Bienvenue " + client + "           |");
+        out.print(getMenuUser());
+        out.flush();
+    }
+
+    private void handleMsgDisconnectMaster(String client, final Socket userSocket) throws IOException {
+        System.out.println("Client " + client + " DISCONNECTED");
+            userSocket.close();
+    }
+
+    private void handleMsgPlayMaster(String client, final Socket userSocket, PrintWriter out){
+        System.out.println("Client " + client + " ASK FOR PLAYING");
+        if (userWait == null) {
+            //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
+            out.println("En attente d'un joueur...");
+            out.flush();
+            User user1 = findUserFromTable(client, usersConnectedTable);
+            removeUserFromTable(user1, usersConnectedTable);
+            userWait = user1;
+            user1.setStatus(Status.WAIT);
+        } else {
+            //s'il y a un client également en attente, le jeu peut commencer
+            //enlever user de userWait
+            User user1 = userWait;
+            userWait = null;
+
+            //enlever user de la table usersConnectedTable
+            User user2 = findUserFromTable(client, usersConnectedTable);
+            removeUserFromTable(user2, usersConnectedTable);
+
+            //add users dans playingTable
+            addUserTable(user1, usersPlayingTable);
+            addUserTable(user2, usersPlayingTable);
+
+            //add users dans gameTable
+            Game game = new Game(user1, user2);
+            String gameKey = user1.getPseudo()+user2.getPseudo();
+            user1.setGameKey(gameKey);
+            user2.setGameKey(gameKey);
+            addGameToGameTable(gameKey, game);
+
+            //preparer des questions pour le client
+            String question = prepareQuestions(game);
+            //TODO fait Attention, ELOM ALICE
+            //TODO le serveur master doit envoyer le nbrQuestion du client aux autres serveurs pour que les autres serveurs mettent a jour le nbrQuestion de ses cotes
+
+            //informer le client pour commencer le jeu
+            // (le jeu commence par le client qui attend)
+            System.out.println("Client " + user1.getPseudo() + " IS PLAYING THE GAME");
+            System.out.println("Client " + user2.getPseudo() + " IS PLAYING THE GAME");
+            user1.getSocketOut().println("C'est parti !!!");
+            user1.getSocketOut().println(question);
+            user1.getSocketOut().println("Entrez votre réponse:");
+            user1.getSocketOut().flush();
+            out.println("C'est parti !!!");
+            out.println("Merci de patienter. " +
+                    "Client " + user1.getPseudo() + " est en train de jouer...");
+            out.flush();
+        }
+    }
+
+    private void handleMsgResultMaster(String client, String contenu){
+        Game game = findGameFromGameTable(client);
+        String response = getResponse(game);
+
+        //recuperer la reponse du client et traiter la reponse
+        if (contenu.equals(response)) {
+            game.getUserPlaying().getSocketOut().println("Réponse correcte");
+            game.getUserPlaying().getSocketOut().flush();
+            game.setScoreUserPlaying(game.getScoreUserPlaying() + 1);
+        } else {
+            game.getUserPlaying().getSocketOut().println("Réponse incorrecte");
+            game.getUserPlaying().getSocketOut().flush();
+        }
+
+        if (game.getUserPlaying() == game.getUser1()) {
+            //client1 a fini son tour, client2 va commencer son tour
+            game.getUserPlaying().getSocketOut().println
+                    ("Client " + game.getUser2().getPseudo() + " est en train de jouer...");
+            game.getUserPlaying().getSocketOut().flush();
+
+            //modifier la parametre userPlaying pour changer le client joué
+            game.setUserPlaying(game.getUser2());
+
+            //preparer des question pour le jeu
+            String question = prepareQuestions(game);
+            //TODO fait Attention, ELOM ALICE
+            //TODO le serveur master doit envoyer le nbrQuestion du client aux autres serveurs pour que les autres serveurs mettent a jour le nbrQuestion de ses cotes
+
+            //envoyer la question au client
+            game.getUser2().getSocketOut().println(question);
+            game.getUser2().getSocketOut().println("Entrez votre réponse: ");
+            game.getUser2().getSocketOut().flush();
+        } else {
+            //si le deuxieme client fini son tour, le leu est terminé
+            if (game.getScoreUser1() > game.getScoreUser2()) {
+                game.getUser1().getSocketOut().println("Vous avez gagné !!!");
+                game.getUser1().getSocketOut().flush();
+                game.getUser2().getSocketOut().println("Vous avez perdu !!!");
+                game.getUser2().getSocketOut().flush();
+            } else if (game.getScoreUser1() < game.getScoreUser2()) {
+                game.getUser1().getSocketOut().println("Vous avez perdu !!!");
+                game.getUser1().getSocketOut().flush();
+                game.getUser2().getSocketOut().println("Vous avez gagné !!!");
+                game.getUser2().getSocketOut().flush();
+            } else {
+                game.getUser1().getSocketOut().println("Match nul !!!");
+                game.getUser1().getSocketOut().flush();
+                game.getUser2().getSocketOut().println("Match nul !!!");
+                game.getUser2().getSocketOut().flush();
+            }
+
+            System.out.println("GAME BETWEEN " + game.getUser1().getPseudo() + " AND " + game.getUser2().getPseudo() + " IS OVER");
+
+            User user1 = game.getUser1();
+            User user2 = game.getUser2();
+            //enlever le jeu de la table userPlayingTable
+            removeUserFromTable(user1, usersPlayingTable);
+            removeUserFromTable(user2, usersPlayingTable);
+
+            //deplacer les client dans la liste usersConnectedTable
+            addUserTable(user1, usersConnectedTable);
+            addUserTable(user2, usersConnectedTable);
+
+            //enlever le jeu de la table gamesTable
+            removeGameFromGameTable(user1.getGameKey());
+            user1.setGameKey(null);
+            user2.setGameKey(null);
+
+            //envoyer le menu au client
+            game.getUser1().getSocketOut().print(getMenuUser());
+            game.getUser1().getSocketOut().flush();
+            game.getUser2().getSocketOut().print(getMenuUser());
+            game.getUser2().getSocketOut().flush();
         }
     }
 
@@ -622,83 +638,98 @@ public class Server {
 
         switch (typemsg) {
             case "CONNECT":
-                System.out.println("Client " + client + " CONNECTED");
-                //ajoute dans la liste des utilisateurs connectés
-                addUserTable(new User(client, userSocket, Status.CONNECTED), usersConnectedTable);
+                handleMsgConnectNonMaster(client, userSocket);
                 break;
             case "DISCONNECT":
-                System.out.println("Client " + client + " DISCONNECTED");
+                handleMsgDisconnectNonMaster(client);
                 break;
             case "PLAY":
-                System.out.println("Client " + client + " ASK FOR PLAYING");
-                if (userWait == null) {
-                    //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
-                    User user1 = findUserFromTable(client, usersConnectedTable);
-                    removeUserFromTable(user1, usersConnectedTable);
-                    userWait = user1;
-                    user1.setStatus(Status.WAIT);
-                } else {
-                    //s'il y a un client également en attente, le jeu peut commencer
-                    User user1 = userWait;
-                    userWait = null;
-
-                    //enlever user de la table usersConnectedTable
-                    User user2 = findUserFromTable(client, usersConnectedTable);
-                    removeUserFromTable(user2, usersConnectedTable);
-
-                    //add users dans playingTable
-                    addUserTable(user1, usersPlayingTable);
-                    addUserTable(user2, usersPlayingTable);
-
-                    //add users dans gameTable
-                    Game game = new Game(user1, user2);
-                    String gameKey = user1.getPseudo()+user2.getPseudo();
-                    user1.setGameKey(gameKey);
-                    user2.setGameKey(gameKey);
-                    addGameToGameTable(gameKey, game);
-
-                    //informer au clients pour commencer le jeu (le jeu commence par le client qui attend)
-                    System.out.println("Client " + user1.getPseudo() + " IS PLAYING THE GAME");
-                    System.out.println("Client " + user2.getPseudo() + " IS PLAYING THE GAME");
-                }
+                handleMsgPlayNonMaster(client);
                 break;
             case "RESPONSE":
-                Game game = findGameFromGameTable(client);
-                String response = getResponse(game);
-
-                //recuperer la reponse du client et traiter la reponse
-                if (contenu.equals(response)) {
-                    game.setScoreUserPlaying(game.getScoreUserPlaying() + 1);
-                }
-
-                if (game.getUserPlaying() == game.getUser1()) {
-                    //si le premier client fini son tour, l'autre client va commencer son tour
-                    //modifier la parametre userPlaying pour changer le client joué
-                    game.setUserPlaying(game.getUser2());
-                } else {
-                    System.out.println("GAME BETWEEN " + game.getUser1().getPseudo() + " AND " + game.getUser2().getPseudo() + " IS OVER");
-
-                    User user1 = game.getUser1();
-                    User user2 = game.getUser2();
-                    //enlever le jeu de la table userPlayingTable
-                    removeUserFromTable(user1, usersPlayingTable);
-                    removeUserFromTable(user2, usersPlayingTable);
-
-                    //deplacer les client dans la liste usersConnectedTable
-                    addUserTable(user1, usersConnectedTable);
-                    addUserTable(user2, usersConnectedTable);
-
-                    //enlever le jeu de la table gamesTable
-                    removeGameFromGameTable(user1.getGameKey());
-                    user1.setGameKey(null);
-                    user2.setGameKey(null);
-                }
                 break;
             default:
+                handleMsgResultNonMaster(client, contenu);
                 break;
         }
     }
 
+    private void handleMsgConnectNonMaster(String client, final Socket userSocket){
+        System.out.println("Client " + client + " CONNECTED");
+        //ajoute dans la liste des utilisateurs connectés
+        addUserTable(new User(client, userSocket, Status.CONNECTED), usersConnectedTable);
+    }
+
+    private void handleMsgDisconnectNonMaster(String client) {
+        System.out.println("Client " + client + " DISCONNECTED");
+    }
+
+    private void handleMsgPlayNonMaster(String client){
+        System.out.println("Client " + client + " ASK FOR PLAYING");
+        if (userWait == null) {
+            //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
+            User user1 = findUserFromTable(client, usersConnectedTable);
+            removeUserFromTable(user1, usersConnectedTable);
+            userWait = user1;
+            user1.setStatus(Status.WAIT);
+        } else {
+            //s'il y a un client également en attente, le jeu peut commencer
+            User user1 = userWait;
+            userWait = null;
+
+            //enlever user de la table usersConnectedTable
+            User user2 = findUserFromTable(client, usersConnectedTable);
+            removeUserFromTable(user2, usersConnectedTable);
+
+            //add users dans playingTable
+            addUserTable(user1, usersPlayingTable);
+            addUserTable(user2, usersPlayingTable);
+
+            //add users dans gameTable
+            Game game = new Game(user1, user2);
+            String gameKey = user1.getPseudo()+user2.getPseudo();
+            user1.setGameKey(gameKey);
+            user2.setGameKey(gameKey);
+            addGameToGameTable(gameKey, game);
+
+            //informer au clients pour commencer le jeu (le jeu commence par le client qui attend)
+            System.out.println("Client " + user1.getPseudo() + " IS PLAYING THE GAME");
+            System.out.println("Client " + user2.getPseudo() + " IS PLAYING THE GAME");
+        }
+    }
+
+    private void handleMsgResultNonMaster(String client, String contenu){
+        Game game = findGameFromGameTable(client);
+        String response = getResponse(game);
+
+        //recuperer la reponse du client et traiter la reponse
+        if (contenu.equals(response)) {
+            game.setScoreUserPlaying(game.getScoreUserPlaying() + 1);
+        }
+
+        if (game.getUserPlaying() == game.getUser1()) {
+            //si le premier client fini son tour, l'autre client va commencer son tour
+            //modifier la parametre userPlaying pour changer le client joué
+            game.setUserPlaying(game.getUser2());
+        } else {
+            System.out.println("GAME BETWEEN " + game.getUser1().getPseudo() + " AND " + game.getUser2().getPseudo() + " IS OVER");
+
+            User user1 = game.getUser1();
+            User user2 = game.getUser2();
+            //enlever le jeu de la table userPlayingTable
+            removeUserFromTable(user1, usersPlayingTable);
+            removeUserFromTable(user2, usersPlayingTable);
+
+            //deplacer les client dans la liste usersConnectedTable
+            addUserTable(user1, usersConnectedTable);
+            addUserTable(user2, usersConnectedTable);
+
+            //enlever le jeu de la table gamesTable
+            removeGameFromGameTable(user1.getGameKey());
+            user1.setGameKey(null);
+            user2.setGameKey(null);
+        }
+    }
     /**
      * Recupere le menu disponible pour l'utilisateur
      *
