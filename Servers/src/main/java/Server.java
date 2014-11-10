@@ -348,7 +348,7 @@ public class Server {
                         String source = SplitServerMessage[0];
                         if (source.equals("S")) {
                             //L'expéditeur du message est un serveur
-                            analyzeMessageSentByServer(msg,userSocket,out);
+                            analyzeMessageSentByServer(msg,userSocket);
                         }else {
                             // si le serveur suivant est le master, le message n'est pas transfere
                             if(!neighborServer[0].equals(master[0])){
@@ -387,7 +387,7 @@ public class Server {
      * @param userSocket
      * @throws Exception
      */
-    private void analyzeMessageSentByServer(String msg, final Socket userSocket, PrintWriter out) throws Exception {
+    private void analyzeMessageSentByServer(String msg, final Socket userSocket){
         String[] SplitServerMessage = msg.split(":", 4);
         String serveur1 = SplitServerMessage[1];
         String serveur2 = SplitServerMessage[2];
@@ -646,10 +646,10 @@ public class Server {
             case "PLAY":
                 handleMsgPlayNonMaster(client);
                 break;
-            case "RESPONSE":
+            case "RESULT":
+                handleMsgResultNonMaster(client, contenu);
                 break;
             default:
-                handleMsgResultNonMaster(client, contenu);
                 break;
         }
     }

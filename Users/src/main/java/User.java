@@ -105,7 +105,7 @@ public class User {
                     out.flush();
                 } else {
                     //reponse a la question posee
-                    out.println("C:" + this.pseudo + ":RESPONSE:" + msg);
+                    out.println("C:" + this.pseudo + ":RESULT:" + msg);
                     out.flush();
                 }
             }
