@@ -1,5 +1,7 @@
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.net.Socket;
 
 /**
@@ -7,26 +9,23 @@ import java.net.Socket;
  */
 enum Status { WAIT, PLAY, CONNECTED, DISCONNECT };
 
-public class User {
+public class User implements Serializable {
     private String pseudo;
-    private Socket socket;
+    private transient Socket socket;
     private Status status;
-    private PrintWriter socketOut;
+    //private transient PrintWriter socketOut;
+    private transient ObjectOutputStream socketOout;
     private String gameKey;
 
     /**
      * Crée un utilisateur
      * @param pseudo
      */
-    public User(String pseudo, Socket socket, Status status) {
+    public User(String pseudo, Socket socket, Status status, ObjectOutputStream oout) {
         this.pseudo = pseudo;
         this.socket = socket;
         this.status = status;
-        try {
-            this.socketOut = (new PrintWriter(socket.getOutputStream()));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.socketOout = oout;
     }
 
     /**
@@ -77,20 +76,12 @@ public class User {
         this.status = status;
     }
 
-    /**
-     *
-     * @return
-     */
-    public PrintWriter getSocketOut() {
-        return socketOut;
+    public ObjectOutputStream getSocketOout() {
+        return socketOout;
     }
 
-    /**
-     *
-     * @param socketOut
-     */
-    public void setSocketOut(PrintWriter socketOut) {
-        this.socketOut = socketOut;
+    public void setSocketOout(ObjectOutputStream socketOout) {
+        this.socketOout = socketOout;
     }
 
     /**
@@ -108,4 +99,6 @@ public class User {
     public void setGameKey(String gameKey) {
         this.gameKey = gameKey;
     }
+
+
 }
