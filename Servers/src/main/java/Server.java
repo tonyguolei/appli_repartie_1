@@ -312,6 +312,10 @@ public class Server {
         }).start();
     }
 
+    /**
+     *
+     * @throws Exception
+     */
     public void ServerNeighbor() throws Exception {
         socketFront = new Socket(neighborServer[1], Integer.valueOf(neighborServer[2]));
         //inClient = new BufferedReader(new InputStreamReader(socketFront.getInputStream()));
@@ -380,10 +384,6 @@ public class Server {
 //                        Server.outClient.flush();
                         try {
                             Server.ooutClient.writeObject("S:" + neighborBehindMe[0] + ":" + sId + ":" + "DEAD");
-                        } catch (IOException e) {
-                            //e.printStackTrace();
-                        }
-                        try {
                             Server.ooutClient.flush();
                         } catch (IOException e) {
                             //e.printStackTrace();
@@ -472,9 +472,9 @@ public class Server {
     /**
      * Permet d'analyser de traiter le message recu et envoyé par un client
      * dans le cas ou le destinataire est le master
-     *
      * @param msg
      * @param userSocket
+     * @param oout
      * @throws Exception
      */
     private void analyzeMessageSentByUser_Master(String msg, final Socket userSocket, ObjectOutputStream oout) throws Exception {
@@ -492,7 +492,7 @@ public class Server {
             case "PLAY":
                 handleMsgPlayMaster(client, oout);
                 break;
-            case "RESPONSE":
+            case "RESULT":
                 handleMsgResultMaster(client, contenu);
                 break;
             default:
@@ -500,6 +500,13 @@ public class Server {
         }
     }
 
+    /**
+     * traiter les messages du type CONNECT
+     * @param client
+     * @param userSocket
+     * @param oout
+     * @throws IOException
+     */
     private void handleMsgConnectMaster(String client, final Socket userSocket, ObjectOutputStream oout) throws IOException{
         System.out.println("Client " + client + " CONNECTED");
         //ajoute dans la liste des utilisateurs connectés
@@ -512,11 +519,23 @@ public class Server {
         oout.flush();
     }
 
+    /**
+     * traiter les messages du type DISCONNECT
+     * @param client
+     * @param userSocket
+     * @throws IOException
+     */
     private void handleMsgDisconnectMaster(String client, final Socket userSocket) throws IOException {
         System.out.println("Client " + client + " DISCONNECTED");
         userSocket.close();
     }
 
+    /**
+     * traiter les messages du type PLAY
+     * @param client
+     * @param oout
+     * @throws IOException
+     */
     private void handleMsgPlayMaster(String client, ObjectOutputStream oout) throws IOException{
         System.out.println("Client " + client + " ASK FOR PLAYING");
         if (userWait == null) {
@@ -550,7 +569,6 @@ public class Server {
             //preparer des questions pour le client
             prepareQuestions(game);
 
-
             //informer le client pour commencer le jeu
             // (le jeu commence par le client qui attend)
             System.out.println("Client " + user1.getPseudo() + " IS PLAYING THE GAME");
@@ -567,22 +585,20 @@ public class Server {
         }
     }
 
+    /**
+     * traiter les message du type RESULT
+     * @param client
+     * @param contenu
+     * @throws IOException
+     */
     private void handleMsgResultMaster(String client, String contenu)throws IOException{
         Game game = findGameFromGameTable(client);
-        String response = getResult(game);
 
-        //recuperer la reponse du client et traiter la reponse
-        if (contenu.equals(response)) {
-            game.getUserPlaying().getSocketOout().writeObject("Réponse correcte");
-            game.getUserPlaying().getSocketOout().flush();
-            game.setScoreUserPlaying(game.getScoreUserPlaying() + 1);
-        } else {
-            game.getUserPlaying().getSocketOout().writeObject("Réponse incorrecte");
-            game.getUserPlaying().getSocketOout().flush();
-        }
+        //recuperer le score du client et traiter le score
+        game.setScoreUserPlaying(Integer.parseInt(contenu));
 
         if (game.getUserPlaying() == game.getUser1()) {
-            //client1 a fini son tour, client2 va commencer son tour
+            //client1 a fini sa patie, client2 va commencer sa partie
             game.getUserPlaying().getSocketOout().writeObject
                     ("Client " + game.getUser2().getPseudo() + " est en train de jouer...");
             game.getUserPlaying().getSocketOout().flush();
@@ -595,10 +611,12 @@ public class Server {
 
             //envoyer la question au client
             game.getUser2().getSocketOout().writeObject("C'est parti !!!");
-            //TODO envoyer game au user2
+            game.getUser2().getSocketOout().writeObject("OBJETGAME");
+            game.getUser2().getSocketOout().flush();
+            game.getUser2().getSocketOout().writeObject(game);
             game.getUser2().getSocketOout().flush();
         } else {
-            //si le deuxieme client fini son tour, le leu est terminé
+            //si le deuxieme client fini sa partie, le leu est terminé
             if (game.getScoreUser1() > game.getScoreUser2()) {
                 game.getUser1().getSocketOout().writeObject("Vous avez gagné !!!");
                 game.getUser1().getSocketOout().flush();
@@ -644,9 +662,9 @@ public class Server {
     /**
      * Permet d'analyser de traiter le message recu et envoyé par un client
      * dans le cas ou le destinataire n'est pas le master
-     *
      * @param msg
      * @param userSocket
+     * @param oout
      * @throws Exception
      */
     private void analyzeMessageSentByUser_NotMaster(String msg, final Socket userSocket, ObjectOutputStream oout) throws Exception {
@@ -673,6 +691,12 @@ public class Server {
         }
     }
 
+    /**
+     * traiter les message du type CONNECT
+     * @param client
+     * @param userSocket
+     * @param oout
+     */
     private void handleMsgConnectNonMaster(String client, final Socket userSocket, ObjectOutputStream oout){
         System.out.println("Client " + client + " CONNECTED");
         //ajoute dans la liste des utilisateurs connectés
@@ -680,10 +704,18 @@ public class Server {
         addUserTable(user, usersConnectedTable);
     }
 
+    /**
+     * traiter les message du type DISCONNECT
+     * @param client
+     */
     private void handleMsgDisconnectNonMaster(String client) {
         System.out.println("Client " + client + " DISCONNECTED");
     }
 
+    /**
+     * traiter les message du type PLAY
+     * @param client
+     */
     private void handleMsgPlayNonMaster(String client){
         System.out.println("Client " + client + " ASK FOR PLAYING");
         if (userWait == null) {
@@ -717,17 +749,21 @@ public class Server {
         }
     }
 
-    private void handleMsgResultNonMaster(String client, String contenu){
+    /**
+     * traiter les message du type RESULT
+     * @param client
+     * @param contenu
+     * @throws IOException
+     */
+    private void handleMsgResultNonMaster(String client, String contenu) throws IOException {
         Game game = findGameFromGameTable(client);
-        String response = getResult(game);
 
-        //recuperer la reponse du client et traiter la reponse
-        if (contenu.equals(response)) {
-            game.setScoreUserPlaying(game.getScoreUserPlaying() + 1);
-        }
+        //recuperer le score du client et traiter le score
+        game.setScoreUserPlaying(Integer.parseInt(contenu));
 
         if (game.getUserPlaying() == game.getUser1()) {
-            //si le premier client fini son tour, l'autre client va commencer son tour
+            //client1 a fini sa patie, client2 va commencer sa partie
+
             //modifier la parametre userPlaying pour changer le client joué
             game.setUserPlaying(game.getUser2());
         } else {
@@ -807,7 +843,7 @@ public class Server {
     }
 
     /**
-     *
+     * ajouter un jeu d'une collection
      * @param gameKey
      * @param game
      */
@@ -815,12 +851,16 @@ public class Server {
         gamesTable.put(gameKey, game);
     }
 
+    /**
+     * supprimer un jeu d'une collection
+     * @param gameKey
+     */
     private void removeGameFromGameTable(String gameKey) {
         gamesTable.remove(gameKey);
     }
 
     /**
-     *
+     * Chercher un jeu d'une collection
      * @param client
      * @return
      */
@@ -830,7 +870,7 @@ public class Server {
     }
 
     /**
-     * preparer des questions pour chaque client
+     * preparer des questions pour un client
      *
      * @param game
      */
@@ -840,22 +880,9 @@ public class Server {
         for(int i=0; i<3; i++) {
             Random r = new Random();
             int numeroquestion = r.nextInt(Integer.parseInt(questionQuiz.getValue("nbrQuestions"))) + 1;
-            game.addQuestionsUserPlaying(new Question(questionQuiz.getValue("question"+Integer.toString(numeroquestion)),
-                    questionQuiz.getValue("response"+Integer.toString(numeroquestion))));
+            game.setQuestionsUserPlaying(new Question(questionQuiz.getValue("question" + Integer.toString(numeroquestion)),
+                    questionQuiz.getValue("response" + Integer.toString(numeroquestion))));
         }
-    }
-
-    ;
-
-    /**
-     * recuperer le score qui correspond les questions du client
-     *
-     * @param game
-     * @return
-     */
-    private String getResult(Game game) {
-        //TODO completer plus tard
-        return "aaa";
     }
 
     /**

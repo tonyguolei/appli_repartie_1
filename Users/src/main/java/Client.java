@@ -4,7 +4,9 @@
 
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Scanner;
 
 public class Client {
@@ -14,6 +16,11 @@ public class Client {
     private String addressServer;
     private int portServer;
     private static HashMap<Integer, String> mapServer = new HashMap<Integer, String>();
+    private Game game = null;
+    private int numeroQuestion = 0;
+    private int score = 0;
+    private boolean quitVountairy = false;
+
     static {
         //Initialisation liste serveurs
         saveListServer();
@@ -95,31 +102,35 @@ public class Client {
     }
 
     /**
-     * Traiter les messages recu via serveurs
+     * Traiter les messages recu
      * @param oin
      */
     private void handleMsgFromServer(ObjectInputStream oin){
         String ackServer;
         try {
             while ((ackServer = (String)oin.readObject()) != null) {
+                //si le message est "OBJETGAME", le message suivant contient l'objet Game
                 if(ackServer.equals("OBJETGAME")){
-                    Game game = (Game)oin.readObject();
-                    System.out.println("test: " + game.getUser1().getPseudo());
+                    game = (Game)oin.readObject();
+                    displayQuestion(game, numeroQuestion);
                 }else {
                     System.out.println(ackServer);
                 }
             }
         } catch (IOException e) {
-            //TODO gere le cas si le serveur est mort!
-            e.printStackTrace();
-            System.out.println("serveur est mort");
+            if(quitVountairy){
+                System.out.println("vous avez quitté");
+            }else{
+                //TODO gere le cas si le serveur est mort!
+                System.out.println("serveur est mort");
+            }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
     }
 
     /**
-     * Traiter les messages envoye au serveur
+     * Traiter les messages envoyé au serveur
      * @param oout
      * @throws IOException
      */
@@ -132,19 +143,62 @@ public class Client {
                 //demande de deconnexion
                 oout.writeObject("C:" + this.pseudo + ":DISCONNECT:" + "");
                 oout.flush();
+                quitVountairy = true;
                 break;
             } else if (msg.equals("play")) {
                 //demande de lancement du jeu
                 oout.writeObject("C:" + this.pseudo + ":PLAY:" + "");
                 oout.flush();
             } else {
-                //reponse a la question posee
-                oout.writeObject("C:" + this.pseudo + ":RESULT:" + msg);
-                oout.flush();
+                //si le jeu existe, jouer le jeu
+                if (game != null) {
+                    if(numeroQuestion<3) {
+                        checkResponse(game, numeroQuestion, msg);
+                        numeroQuestion++;
+                        if(numeroQuestion != 3) {
+                            displayQuestion(game, numeroQuestion);
+                        }
+                    }
+                    if(numeroQuestion == 3){
+                        oout.writeObject("C:" + this.pseudo + ":RESULT:" + Integer.toString(score));
+                        oout.flush();
+                        //reinitialiser les parametres pour le jeu
+                        game = null;
+                        numeroQuestion = 0;
+                        score = 0;
+                    }
+                }else{
+                    //sinon, on fait rien quand le client tape sur clavier sauf "play" et "quit"
+                }
             }
         }
     }
+
     /**
+     * afficher le contnue de la question
+     * @param game
+     * @param numeroQuestion
+     */
+    private void displayQuestion(Game game, int numeroQuestion){
+        System.out.println(game.getQuestionsUserPlaying().get(numeroQuestion).getContenuQuestion());
+    }
+
+    /**
+     * traiter la reponse
+     * @param game
+     * @param numeroQuestion
+     * @param response
+     */
+    private void checkResponse(Game game, int numeroQuestion, String response){
+        if(response.equals(game.getQuestionsUserPlaying().get(numeroQuestion).getResponse())){
+            System.out.println("votre réponse est correcte");
+            score++;
+        }else{
+            System.out.println("votre réponse est faux");
+        }
+    }
+    /**
+     * retourne pseudo du client
      * @return
      */
     public String getPseudo() {
@@ -152,6 +206,7 @@ public class Client {
     }
 
     /**
+     * mettre pseudo du client
      * @param pseudo
      */
     public void setPseudo(String pseudo) {
@@ -159,6 +214,7 @@ public class Client {
     }
 
     /**
+     * retourne socket du client
      * @return
      */
     public Socket getSocket() {
@@ -166,6 +222,7 @@ public class Client {
     }
 
     /**
+     * mettre socket du client
      * @param socket
      */
     public void setSocket(Socket socket) {

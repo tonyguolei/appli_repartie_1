@@ -12,18 +12,34 @@ public class Question implements Serializable {
         this.response = response;
     }
 
+    /**
+     * retourne le contenue de la question
+     * @return
+     */
     public String getContenuQuestion() {
         return contenuQuestion;
     }
 
+    /**
+     *  mettre le contenue de la question
+     * @param contenuQuestion
+     */
     public void setContenuQuestion(String contenuQuestion) {
         this.contenuQuestion = contenuQuestion;
     }
 
+    /**
+     * retourne la reponse de la question
+     * @return
+     */
     public String getResponse() {
         return response;
     }
 
+    /**
+     * mettre la reponse de la question
+     * @param response
+     */
     public void setResponse(String response) {
         this.response = response;
     }

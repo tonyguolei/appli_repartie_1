@@ -30,6 +30,26 @@ public class Game implements Serializable {
         this.scoreUser2 = 0;
     }
 
+    /**
+     * retoune client qui est en train de jouer
+     * @return
+     */
+    public User getUserPlaying() {
+        return userPlaying;
+    }
+
+    /**
+     * mettre client qui est en train de jouer
+     * @param userPlaying
+     */
+    public void setUserPlaying(User userPlaying) {
+        this.userPlaying = userPlaying;
+    }
+
+    /**
+     * retourne le score du client qui est en train de jouer
+     * @return
+     */
     public int getScoreUserPlaying() {
         if (userPlaying == user1) {
             return scoreUser1;
@@ -38,6 +58,10 @@ public class Game implements Serializable {
         }
     }
 
+    /**
+     * mettre le score du client qui est en train de jouer
+     * @param scoreUserPlaying
+     */
     public void setScoreUserPlaying(int scoreUserPlaying) {
         if (userPlaying == user1) {
             scoreUser1 = scoreUserPlaying;
@@ -46,31 +70,80 @@ public class Game implements Serializable {
         }
     }
 
+    /**
+     * retourne les questions du client qui est en train de jouer
+     * @return
+     */
+    public List<Question> getQuestionsUserPlaying() {
+        if (userPlaying == user1) {
+            return questionsUser1;
+        } else {
+            return questionsUser2;
+        }
+    }
+
+    /**
+     * mettre les questions du client qui est en train de jouer
+     * @param question
+     */
+    public void setQuestionsUserPlaying(Question question){
+        if (userPlaying == user1) {
+            questionsUser1.add(question);
+        } else {
+            questionsUser2.add(question);
+        }
+    }
+
+    /**
+     * retourner le key du jeu
+     * @return
+     */
     public String getGameKey() {
         return gameKey;
     }
 
+    /**
+     * mettre le key du jeu
+     * @param gameKey
+     */
     public void setGameKey(String gameKey) {
         this.gameKey = gameKey;
     }
 
+    /**
+     *  retourne les questions du client 1
+     * @return
+     */
     public List<Question> getQuestionsUser1() {
         return questionsUser1;
     }
 
+    /**
+     * mettre les questions du client 1
+     * @param questionsUser1
+     */
     public void setQuestionsUser1(List<Question> questionsUser1) {
         this.questionsUser1 = questionsUser1;
     }
 
+    /**
+     * retourne les questions du client 2
+     * @return
+     */
     public List<Question> getQuestionsUser2() {
         return questionsUser2;
     }
 
+    /**
+     * mettre les questions du client 2
+     * @param questionsUser2
+     */
     public void setQuestionsUser2(List<Question> questionsUser2) {
         this.questionsUser2 = questionsUser2;
     }
 
     /**
+     * retourne client 1
      * @return
      */
     public User getUser1() {
@@ -78,6 +151,7 @@ public class Game implements Serializable {
     }
 
     /**
+     * mettre client 1
      * @param user1
      */
     public void setUser1(User user1) {
@@ -85,6 +159,7 @@ public class Game implements Serializable {
     }
 
     /**
+     * retourne client 2
      * @return
      */
     public User getUser2() {
@@ -92,6 +167,7 @@ public class Game implements Serializable {
     }
 
     /**
+     * mettre client 2
      * @param user2
      */
     public void setUser2(User user2) {
@@ -99,6 +175,7 @@ public class Game implements Serializable {
     }
 
     /**
+     * retourne le score du client 1
      * @return
      */
     public int getScoreUser1() {
@@ -106,6 +183,7 @@ public class Game implements Serializable {
     }
 
     /**
+     * mettre le score du client 1
      * @param scoreUser1
      */
     public void setScoreUser1(int scoreUser1) {
@@ -113,6 +191,7 @@ public class Game implements Serializable {
     }
 
     /**
+     * retourne le score du client 2
      * @return
      */
     public int getScoreUser2() {
@@ -120,26 +199,11 @@ public class Game implements Serializable {
     }
 
     /**
+     * mettre le score du client 2
      * @param scoreUser2
      */
     public void setScoreUser2(int scoreUser2) {
         this.scoreUser2 = scoreUser2;
-    }
-
-    public User getUserPlaying() {
-        return userPlaying;
-    }
-
-    public void setUserPlaying(User userPlaying) {
-        this.userPlaying = userPlaying;
-    }
-
-    public void addQuestionsUserPlaying(Question question){
-        if (userPlaying == user1) {
-            questionsUser1.add(question);
-        } else {
-            questionsUser1.add(question);
-        }
     }
 }
 

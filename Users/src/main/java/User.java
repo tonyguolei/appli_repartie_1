@@ -13,7 +13,6 @@ public class User implements Serializable {
     private String pseudo;
     private transient Socket socket;
     private Status status;
-    //private transient PrintWriter socketOut;
     private transient ObjectOutputStream socketOout;
     private String gameKey;
 
@@ -53,7 +52,7 @@ public class User implements Serializable {
     }
 
     /**
-     * Modifie la socket
+     * modifie le socket
      * @param socket
      */
     public void setSocket(Socket socket) {
@@ -76,6 +75,10 @@ public class User implements Serializable {
         this.status = status;
     }
 
+    /**
+     * reourne la sortie du socket
+     * @return
+     */
     public ObjectOutputStream getSocketOout() {
         return socketOout;
     }
@@ -85,7 +88,7 @@ public class User implements Serializable {
     }
 
     /**
-     *
+     * reourne le key du jeu
      * @return
      */
     public String getGameKey() {
@@ -93,7 +96,7 @@ public class User implements Serializable {
     }
 
     /**
-     *
+     * modifie la sortie du socket
      * @param gameKey
      */
     public void setGameKey(String gameKey) {
