@@ -342,6 +342,17 @@ public class Server {
     }
 
     /**
+     * Transferer le message a mon voisin
+     * @param msg
+     * @throws IOException
+     */
+    private void sendMessageNextServer(String msg) throws IOException {
+        //Envoyer a mon voisin le message recu
+        Server.ooutFront.writeObject(msg);
+        Server.ooutFront.flush();
+    }
+
+    /**
      * Permet l'analyse et le traitement des messages recus par un serveur
      * @param userSocket
      */
@@ -385,8 +396,7 @@ public class Server {
                         System.out.println(" Mon voisin Back "+neighborBehindMe[0]+ " à l'adresse "
                                 + neighborBehindMe[1] + " sur le port " + neighborBehindMe[2]+ " est MORT");
                         try {
-                            Server.ooutFront.writeObject("S:" + neighborBehindMe[0] + ":" + sId + ":" + "DEAD");
-                            Server.ooutFront.flush();
+                            sendMessageNextServer("S:" + neighborBehindMe[0] + ":" + sId + ":" + "DEAD");
                         } catch (IOException e) {
                             //e.printStackTrace();
                         }
@@ -441,8 +451,7 @@ public class Server {
                     //le voisin mort n'etait pas son voisin
                     //election nouveau master
                     master = electMaster();
-                    Server.ooutFront.writeObject(msg);
-                    Server.ooutFront.flush();
+                    sendMessageNextServer(msg);
                 }
                 //retransmet le message a son voisin et fait la mise à jour
                 break;
@@ -460,8 +469,7 @@ public class Server {
                     startServer();
                     System.out.println("Connexion nouvelle effectuee au serveur : " + neighborServer[0]);
                 } else {
-                    Server.ooutFront.writeObject(msg);
-                    Server.ooutFront.flush();
+                    sendMessageNextServer(msg);
                 }
             default:
                 break;
@@ -487,22 +495,19 @@ public class Server {
                 break;
             case "DISCONNECT":
                 //Envoyer a mon voisin le message recu
-                Server.ooutFront.writeObject(msg);
-                Server.ooutFront.flush();
+                sendMessageNextServer(msg);
                 //Traiter le message recu
                 handleMsgDisconnectMaster(msg, userSocket);
                 break;
             case "PLAY":
                 //Envoyer a mon voisin le message recu
-                Server.ooutFront.writeObject(msg);
-                Server.ooutFront.flush();
+                sendMessageNextServer(msg);
                 //Traiter le message recu
                 handleMsgPlayMaster(msg, oout);
                 break;
             case "RESULT":
                 //Envoyer a mon voisin le message recu
-                Server.ooutFront.writeObject(msg);
-                Server.ooutFront.flush();
+                sendMessageNextServer(msg);
                 //Traiter le message recu
                 handleMsgResultMaster(msg);
                 break;
@@ -524,11 +529,8 @@ public class Server {
 
         System.out.println("[Client " + client + " vient de se connecter]");
 
-        //Creer un nouveau message quasi-identique au précédent
-        String nouvMsg = "C:" + client +":CONNECT:OK";
         //Envoyer a son voisin le nouveau message avec le contenu modifie
-        Server.ooutFront.writeObject(nouvMsg);
-        Server.ooutFront.flush();
+        sendMessageNextServer("C:" + client +":CONNECT:OK");
 
         //ajouter dans la liste des utilisateurs connectés
         User user = new User(client, userSocket, Status.CONNECTED, oout);
@@ -708,24 +710,21 @@ public class Server {
             case "DISCONNECT":
                 if (!closeToServerMaster()) {
                     //Envoyer a mon voisin le message recu
-                    Server.ooutFront.writeObject(msg);
-                    Server.ooutFront.flush();
+                    sendMessageNextServer(msg);
                 }
                 handleMsgDisconnectNonMaster(msg);
                 break;
             case "PLAY":
                 if (!closeToServerMaster()) {
                     //Envoyer a mon voisin le message recu
-                    Server.ooutFront.writeObject(msg);
-                    Server.ooutFront.flush();
+                    sendMessageNextServer(msg);
                 }
                 handleMsgPlayNonMaster(msg);
                 break;
             case "RESULT":
                 if (!closeToServerMaster()) {
                     //Envoyer a mon voisin le message recu
-                    Server.ooutFront.writeObject(msg);
-                    Server.ooutFront.flush();
+                    sendMessageNextServer(msg);
                 }
                 handleMsgResultNonMaster(msg);
                 break;
@@ -752,8 +751,7 @@ public class Server {
 
             if (!closeToServerMaster()) {
                 //Envoyer a mon voisin le message recu
-                Server.ooutFront.writeObject(msg);
-                Server.ooutFront.flush();
+                sendMessageNextServer(msg);
             }
 
             //ajouter dans la liste des utilisateurs connectés
