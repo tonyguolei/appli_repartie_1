@@ -4,9 +4,7 @@
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Scanner;
 
 public class Client {
@@ -16,15 +14,14 @@ public class Client {
     private String addressServer;
     private int portServer;
     private static HashMap<Integer, String> mapServer = new HashMap<Integer, String>();
-    private Game game = null;
-    private int numeroQuestion = 0;
-    private int score = 0;
-    private boolean quitVountairy = false;
-
     static {
         //Initialisation liste serveurs
         saveListServer();
     }
+    private Game game = null;
+    private int numeroQuestion = 0;
+    private int score = 0;
+    private boolean quitVoluntarily = false;
 
     /**
      * Constructeur du Client
@@ -32,7 +29,7 @@ public class Client {
     public Client() {}
 
     /**
-     * Creer un psudo pour ce client
+     * Creer un pseudo pour ce client
      * @return
      */
     public String createPseudo() {
@@ -70,7 +67,7 @@ public class Client {
     }
 
     /**
-     * connecter au server
+     * Se connecter au server
      *
      * @param addressServer
      * @param port
@@ -102,7 +99,7 @@ public class Client {
     }
 
     /**
-     * Traiter les messages recu
+     * Traiter les messages recus
      * @param oin
      */
     private void handleMsgFromServer(ObjectInputStream oin){
@@ -118,11 +115,15 @@ public class Client {
                 }
             }
         } catch (IOException e) {
-            if(quitVountairy){
+            if(quitVoluntarily){
                 System.out.println("vous avez quitté");
             }else{
-                //TODO gere le cas si le serveur est mort!
                 System.out.println("serveur est mort");
+
+                //TODO ouvrir une connexion avec le serveur suivant au master précédent
+                //réponse avec les nouvelles infos du serveur master
+                //fermer la connexion
+                //tenter la connexion avec nouveau master
             }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -143,7 +144,7 @@ public class Client {
                 //demande de deconnexion
                 oout.writeObject("C:" + this.pseudo + ":DISCONNECT:" + "");
                 oout.flush();
-                quitVountairy = true;
+                quitVoluntarily = true;
                 break;
             } else if (msg.equals("play")) {
                 //demande de lancement du jeu
