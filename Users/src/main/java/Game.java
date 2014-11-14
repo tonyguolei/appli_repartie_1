@@ -32,6 +32,7 @@ public class Game implements Serializable {
 
     /**
      * retoune client qui est en train de jouer
+     *
      * @return
      */
     public User getUserPlaying() {
@@ -40,6 +41,7 @@ public class Game implements Serializable {
 
     /**
      * mettre client qui est en train de jouer
+     *
      * @param userPlaying
      */
     public void setUserPlaying(User userPlaying) {
@@ -48,6 +50,7 @@ public class Game implements Serializable {
 
     /**
      * retourne le score du client qui est en train de jouer
+     *
      * @return
      */
     public int getScoreUserPlaying() {
@@ -60,6 +63,7 @@ public class Game implements Serializable {
 
     /**
      * mettre le score du client qui est en train de jouer
+     *
      * @param scoreUserPlaying
      */
     public void setScoreUserPlaying(int scoreUserPlaying) {
@@ -72,6 +76,7 @@ public class Game implements Serializable {
 
     /**
      * retourne les questions du client qui est en train de jouer
+     *
      * @return
      */
     public List<Question> getQuestionsUserPlaying() {
@@ -84,9 +89,10 @@ public class Game implements Serializable {
 
     /**
      * mettre les questions du client qui est en train de jouer
+     *
      * @param question
      */
-    public void setQuestionsUserPlaying(Question question){
+    public void setQuestionsUserPlaying(Question question) {
         if (userPlaying == user1) {
             questionsUser1.add(question);
         } else {
@@ -96,6 +102,7 @@ public class Game implements Serializable {
 
     /**
      * retourner le key du jeu
+     *
      * @return
      */
     public String getGameKey() {
@@ -104,6 +111,7 @@ public class Game implements Serializable {
 
     /**
      * mettre le key du jeu
+     *
      * @param gameKey
      */
     public void setGameKey(String gameKey) {
@@ -111,7 +119,8 @@ public class Game implements Serializable {
     }
 
     /**
-     *  retourne les questions du client 1
+     * retourne les questions du client 1
+     *
      * @return
      */
     public List<Question> getQuestionsUser1() {
@@ -120,6 +129,7 @@ public class Game implements Serializable {
 
     /**
      * mettre les questions du client 1
+     *
      * @param questionsUser1
      */
     public void setQuestionsUser1(List<Question> questionsUser1) {
@@ -128,6 +138,7 @@ public class Game implements Serializable {
 
     /**
      * retourne les questions du client 2
+     *
      * @return
      */
     public List<Question> getQuestionsUser2() {
@@ -136,6 +147,7 @@ public class Game implements Serializable {
 
     /**
      * mettre les questions du client 2
+     *
      * @param questionsUser2
      */
     public void setQuestionsUser2(List<Question> questionsUser2) {
@@ -144,6 +156,7 @@ public class Game implements Serializable {
 
     /**
      * retourne client 1
+     *
      * @return
      */
     public User getUser1() {
@@ -152,6 +165,7 @@ public class Game implements Serializable {
 
     /**
      * mettre client 1
+     *
      * @param user1
      */
     public void setUser1(User user1) {
@@ -160,6 +174,7 @@ public class Game implements Serializable {
 
     /**
      * retourne client 2
+     *
      * @return
      */
     public User getUser2() {
@@ -168,6 +183,7 @@ public class Game implements Serializable {
 
     /**
      * mettre client 2
+     *
      * @param user2
      */
     public void setUser2(User user2) {
@@ -176,6 +192,7 @@ public class Game implements Serializable {
 
     /**
      * retourne le score du client 1
+     *
      * @return
      */
     public int getScoreUser1() {
@@ -184,6 +201,7 @@ public class Game implements Serializable {
 
     /**
      * mettre le score du client 1
+     *
      * @param scoreUser1
      */
     public void setScoreUser1(int scoreUser1) {
@@ -192,6 +210,7 @@ public class Game implements Serializable {
 
     /**
      * retourne le score du client 2
+     *
      * @return
      */
     public int getScoreUser2() {
@@ -200,6 +219,7 @@ public class Game implements Serializable {
 
     /**
      * mettre le score du client 2
+     *
      * @param scoreUser2
      */
     public void setScoreUser2(int scoreUser2) {

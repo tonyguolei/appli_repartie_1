@@ -7,7 +7,9 @@ import java.net.Socket;
 /**
  * Created by tonyguolei on 10/20/2014.
  */
-enum Status { WAIT, PLAY, CONNECTED, DISCONNECT };
+enum Status {
+    WAITING, PLAYING, CONNECTED, DISCONNECTED
+};
 
 public class User implements Serializable {
     private String pseudo;
@@ -18,6 +20,7 @@ public class User implements Serializable {
 
     /**
      * Crée un utilisateur
+     *
      * @param pseudo
      */
     public User(String pseudo, Socket socket, Status status, ObjectOutputStream oout) {
@@ -29,6 +32,7 @@ public class User implements Serializable {
 
     /**
      * Recupère le pseudo de l'utilisateur
+     *
      * @return la chaine de caractères contenant le pseudo
      */
     public String getPseudo() {
@@ -37,6 +41,7 @@ public class User implements Serializable {
 
     /**
      * Modifie le pseudo de l'utilisateur
+     *
      * @param pseudo
      */
     public void setPseudo(String pseudo) {
@@ -45,6 +50,7 @@ public class User implements Serializable {
 
     /**
      * Recupère la socket entre le client et un serveur
+     *
      * @return Socket
      */
     public Socket getSocket() {
@@ -53,6 +59,7 @@ public class User implements Serializable {
 
     /**
      * modifie le socket
+     *
      * @param socket
      */
     public void setSocket(Socket socket) {
@@ -61,6 +68,7 @@ public class User implements Serializable {
 
     /**
      * Recupère l'état de l'utilisateur
+     *
      * @return Status
      */
     public Status getStatus() {
@@ -69,6 +77,7 @@ public class User implements Serializable {
 
     /**
      * Modifie l'état de l'utilisateur
+     *
      * @param status
      */
     public void setStatus(Status status) {
@@ -77,6 +86,7 @@ public class User implements Serializable {
 
     /**
      * reourne la sortie du socket
+     *
      * @return
      */
     public ObjectOutputStream getSocketOout() {
@@ -89,6 +99,7 @@ public class User implements Serializable {
 
     /**
      * reourne le key du jeu
+     *
      * @return
      */
     public String getGameKey() {
@@ -97,6 +108,7 @@ public class User implements Serializable {
 
     /**
      * modifie la sortie du socket
+     *
      * @param gameKey
      */
     public void setGameKey(String gameKey) {

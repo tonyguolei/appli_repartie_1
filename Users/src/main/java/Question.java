@@ -14,6 +14,7 @@ public class Question implements Serializable {
 
     /**
      * retourne le contenue de la question
+     *
      * @return
      */
     public String getContenuQuestion() {
@@ -21,7 +22,8 @@ public class Question implements Serializable {
     }
 
     /**
-     *  mettre le contenue de la question
+     * mettre le contenue de la question
+     *
      * @param contenuQuestion
      */
     public void setContenuQuestion(String contenuQuestion) {
@@ -30,6 +32,7 @@ public class Question implements Serializable {
 
     /**
      * retourne la reponse de la question
+     *
      * @return
      */
     public String getResponse() {
@@ -38,6 +41,7 @@ public class Question implements Serializable {
 
     /**
      * mettre la reponse de la question
+     *
      * @param response
      */
     public void setResponse(String response) {
