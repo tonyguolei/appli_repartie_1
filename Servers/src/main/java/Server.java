@@ -662,33 +662,22 @@ public class Server {
 
         //dans le cas ancien server est en panne, si l'utilisateur connecte le
         //nouveau serveur, on va just mettre a jour son socket
-        if (findUserFromTable(client, usersConnectedTable) != null ||
-                findUserFromTable(client, usersPlayingTable) != null ||
-                (userWaiting != null && userWaiting.getPseudo().equals(client))) {
-            User user = null;
-            if (findUserFromTable(client, usersConnectedTable) != null) {
-                user = findUserFromTable(client, usersConnectedTable);
-            } else if (userWaiting != null && userWaiting.getPseudo().equals(client)) {
-                user = userWaiting;
-            } else if (findUserFromTable(client, usersPlayingTable) != null) {
-                user = findUserFromTable(client, usersPlayingTable);
-            } else {
-                System.out.println("Unhandled error in method handleMsgConnectMaster");
-            }
+        User user = findUserByPseudo(client);
+
+        if (user != null){
             user.setSocket(userSocket);
             user.setSocketOout(oout);
             sendMessage("vous avez déja connecté serveur " + sId, oout);
             sendMessage("vous pouvez continuer", oout);
         } else {
             //Creer le nouvel utilisateur
-            User user = new User(client, userSocket, Status.CONNECTED, oout);
+            user = new User(client, userSocket, Status.CONNECTED, oout);
             addUserTable(user, usersConnectedTable);
-
             //ajouter dans la liste des utilisateurs/sockets
             usersSocket.put(userSocket, client);
-
             //Envoyer le menu client
-            sendMessage("============================\n|   Bienvenue " + client + "           |\n" + getMenuUser(), oout);
+            sendMessage("============================\n|   Bienvenue " + client + "           |\n"
+                    + getMenuUser(), oout);
         }
     }
     /**
@@ -950,7 +939,7 @@ public class Server {
         } else {
             userDead = findUserFromTable(client, usersPlayingTable);
             changeUserStatus(client, Status.PLAYING, Status.DISCONNECTED);
-            System.out.println("[Client " + client + " en train de jouer est tombé en panne]");
+            System.out.println("[Client " + client + " en train de jouer s'est déconnecté]");
 
             //Chercher s'il avait des parties en cours
             Game g = gamesTable.get(userDead.getGameKey());
@@ -1078,6 +1067,32 @@ public class Server {
         res += "|        quit              |" + "\n";
         res += "============================";
         return res;
+    }
+
+    /**
+     *
+     * @param pseudo
+     * @return
+     */
+    private User findUserByPseudo(String pseudo){
+        User u = findUserFromTable(pseudo, usersConnectedTable);
+        if (u!=null){
+            //connecté
+            return u;
+        }else{
+            u = findUserFromTable(pseudo, usersPlayingTable);
+            if(u!=null){
+                //en train de jouer
+                return u;
+            }else{
+                if (userWaiting != null && userWaiting.getPseudo().equals(pseudo)){
+                    //en attente
+                    return userWaiting;
+                }
+            }
+        }
+        //joueur inconnu
+        return null;
     }
 
     /**
