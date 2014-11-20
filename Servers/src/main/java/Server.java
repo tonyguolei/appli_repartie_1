@@ -11,46 +11,48 @@ import static java.lang.Thread.sleep;
 
 public class Server {
 
+    /**
+     * **********GESTION DU SERVEUR**************
+     */
+    private int sId;
+    private int port;
     private static boolean resurrect = false;
+    /**
+     * **********GESTION AUTRES SERVEURS****
+     */
+    private ServerSocket serverSocket;
+    private Socket socketFront;
+    private Socket socketBack;
+    private int nbServers;
     /* master[0] = idServeur, [1] = adresseServeur, [2] = portServeur, [3] = etatServeur */
     private static String[] master;
+    /* neighborServerFrontMe[0] = idServeur, [1] = adresseServeur, [2] = portServeur, [3] = etatServeur */
+    private String[] neighborServerFrontMe;
+    /* neighborServerBehindMe[0] = idServeur, [1] = adresseServeur, [2] = portServeur, [3] = etatServeur */
+    private String[] neighborServerBehindMe;
+    /* Contient tous les serveurs (en panne ou non) */
+    private List<String> listServer = new ArrayList<String>();
     /**
      * ********GESTION DES FLUX***************
      */
     private static ObjectInputStream oinFront;
     private static ObjectOutputStream ooutFront;
     /**
-     * **********GESTION DU SERVEUR**************
-     */
-    private int sId;
-    private int port;
-    /**
-     * **********GESTION INTERACTION SERVEURS****
-     */
-    private ServerSocket serverSocket;
-    private Socket socketFront;
-    private Socket socketBack;
-    private int nbServers;
-    /* neighborServer[0] = idServeur, [1] = adresseServeur, [2] = portServeur, [3] = etatServeur */
-    private String[] neighborServer;
-    //TODO est-ce vraiment utile ???
-    /* neighborBehindMe[0] = idServeur, [1] = adresseServeur, [2] = portServeur, [3] = etatServeur */
-    private String[] neighborBehindMe;
-    /* Contient tous les serveurs (en panne ou non) */
-    private List<String> listServer = new ArrayList<String>();
-    /**
-     * *********GESTION DES UTILISATEURS*******
+     * *********GESTION DES UTILISATEURS ET DES PARTIES*******
      */
     /* Hashtable contenant les utilisateurs connectés mais inactifs */
     private Hashtable<String, User> usersConnectedTable = new Hashtable<String, User>();
     /* Utilisateur en attente d'un adversaire */
-    private User userWait;
+    private User userWaiting;
     /* Hashtable contenant les utilisateurs qui sont en train de jouer */
     private Hashtable<String, User> usersPlayingTable = new Hashtable<String, User>();
+    /* Hashtable contenant les utilisateurs qui sont en train de jouer */
+    private Hashtable<String, User> usersDisconnectedTable = new Hashtable<String, User>();
     /* Hashtable contenant les jeux en cours */
     private Hashtable<String, Game> gamesTable = new Hashtable<String, Game>();
     /* Hashtable contenant les utilisateurs et leurs sockets respectives */
     private Hashtable<Socket, String> usersSocket = new Hashtable<Socket, String>();
+
     /*************************************CONSTRUCTEUR - GETTER - SETTER ******************************************/
     /**
      * Créé un serveur à partir d'un Id et d'un numéro de port
@@ -82,7 +84,7 @@ public class Server {
      *
      * @param serverSocket
      */
-    public void setServer(ServerSocket serverSocket) {
+    private void setServer(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
     }
 
@@ -121,6 +123,26 @@ public class Server {
                 serverResurrect = sID + ":" + splitInfo[1] + ":" + splitInfo[2] + ":" + "1";
                 listServer.set(i, serverResurrect);
             }
+        }
+    }
+
+
+    /**
+     * Mettre à jour les informations du serveur ressuscité
+     */
+    private void updateServerRessurect() {
+        try {
+            sleep(30000);
+            //System.out.println("=>Début mise a jour par le serveur : " + sId);
+            sendMessageNextServer("UPDATE:::" + sId);
+            sendMessageNextServer((Hashtable<String, User>) usersConnectedTable);
+            sendMessageNextServer((User) userWaiting);
+            sendMessageNextServer((Hashtable<String, User>) usersPlayingTable);
+            sendMessageNextServer((Hashtable<String, User>) usersDisconnectedTable);
+            sendMessageNextServer((Hashtable<String, Game>) gamesTable);
+            //System.out.println("=>Fin mise a jour par le serveur");
+        } catch (Exception e) {
+            System.out.println("Echec de mise a jour du serveur ressuscité");
         }
     }
 
@@ -207,7 +229,7 @@ public class Server {
      * @return vrai si le serveur suivant est le master
      */
     private boolean closeToServerMaster() {
-        return neighborServer[0].equals(master[0]);
+        return neighborServerFrontMe[0].equals(master[0]);
     }
 
     /**
@@ -292,20 +314,20 @@ public class Server {
     /**
      * Permet de gérer le démarrage des serveurs
      */
-    public void startServer() {
+    private void startServer() {
         new Thread(new Runnable() {
             public void run() {
                 try {
-                    neighborServer = whoIsMyNeighbor(sId);
-                    neighborBehindMe = whoIsMyNeighborBehindMe(sId);
+                    neighborServerFrontMe = whoIsMyNeighbor(sId);
+                    neighborServerBehindMe = whoIsMyNeighborBehindMe(sId);
                     /*System.out.println("****** Serveur  N° " + sId + " se prepare pour demarrer  "
                             + "**************");*/
                     sleep(30000 - 5000 * sId);
-                    /*System.out.println("*************** Lancement du serveur N° " + neighborServer[2]
+                    /*System.out.println("*************** Lancement du serveur N° " + neighborServerFrontMe[2]
                             + "  **************");*/
                     ServerNeighbor();
                 } catch (Exception e) {
-                    System.out.println(" => Demande REFUSÉ " + neighborServer[0]);
+                    System.out.println(" => Demande REFUSÉ " + neighborServerFrontMe[0]);
                     e.printStackTrace();
                 }
             }
@@ -314,22 +336,21 @@ public class Server {
     }
 
     /**
-     *
      * @throws Exception
      */
-    public void ServerNeighbor() throws Exception {
-        socketFront = new Socket(neighborServer[1], Integer.valueOf(neighborServer[2]));
+    private void ServerNeighbor() throws Exception {
+        socketFront = new Socket(neighborServerFrontMe[1], Integer.valueOf(neighborServerFrontMe[2]));
         ooutFront = new ObjectOutputStream(socketFront.getOutputStream());
         oinFront = new ObjectInputStream(socketFront.getInputStream());
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
         if (resurrect == false) {
-            sendMessageNextServer("S:" + neighborBehindMe[0] + " : " + neighborBehindMe[2] + " :" + "INIT");
+            sendMessageNextServer("S:" + neighborServerBehindMe[0] + " : " + neighborServerBehindMe[2] + " :" + "INIT");
         } else {
             System.out.println("Serveur ressuscité ");
             setServerResurrect(sId);
-            sendMessageNextServer("S:" + neighborBehindMe[0] + ":" + sId + ":" + "RESSURECT");
-            sendMessageNextServer("S:" + neighborBehindMe[0] + " : " + neighborBehindMe[2] + " :" + "INIT");
+            sendMessageNextServer("S:" + neighborServerBehindMe[0] + ":" + sId + ":" + "RESSURECT");
+            sendMessageNextServer("S:" + neighborServerBehindMe[0] + " : " + neighborServerBehindMe[2] + " :" + "INIT");
             resurrect = false;
         }
     }
@@ -392,39 +413,41 @@ public class Server {
                             }
                         } else if (source.equals("UPDATE")) {
                             //Mise a jour des infos du serveur ressuscité
-                            updateReceiveByServerRessurect(oin);
+                            handleMsgUpdateServer(oin);
                         } else if (source.equals("GAME")) {
                             //Mise a jour d'une partie transmis par le serveur master
                             Game g = (Game) oin.readObject();
                             handleMsgGameServer(g);
                         } else {
-                            System.out.println("Message de type inconnu");
+                            System.out.println("Erreur : Message de type inconnu");
                         }
                     }
                 } catch (Exception ex) {
                     if (socketBack.equals(userSocket)) {
-                        System.out.println(" Mon voisin Back " + neighborBehindMe[0] + " à l'adresse "
-                                + neighborBehindMe[1] + " sur le port " + neighborBehindMe[2] + " est MORT");
+                        //panne du serveur de derriere
                         try {
-                            sendMessageNextServer("S:" + neighborBehindMe[0] + ":" + sId + ":DEAD");
-                            setServerDead(Integer.valueOf(neighborBehindMe[0]));
-                            neighborBehindMe = whoIsMyNeighborBehindMe(sId);
+                            System.out.println("=>Détection mon voisin Back " + neighborServerBehindMe[0] + " à l'adresse "
+                                    + neighborServerBehindMe[1] + " sur le port " + neighborServerBehindMe[2] + " est mort");
+                            sendMessageNextServer("S:" + neighborServerBehindMe[0] + ":" + sId + ":DEAD");
+                            setServerDead(Integer.valueOf(neighborServerBehindMe[0]));
+                            neighborServerBehindMe = whoIsMyNeighborBehindMe(sId);
                             master = electMaster();
                         } catch (IOException e) {
                             //e.printStackTrace();
                         }
-                        setServerDead(Integer.valueOf(neighborBehindMe[0]));
-                        neighborBehindMe = whoIsMyNeighborBehindMe(sId);
-                    } else {
-                        //TODO gerer ce cas de déconnexion
-                        if (userSocket != null) {
-                            String lastPseudo = usersSocket.get(userSocket);
-                            if (lastPseudo != null) {
-                                System.out.println("CLIENT " + lastPseudo + "DISCONNECTED");
+                    } else if (userSocket != null && usersSocket.containsKey(userSocket)) {
+                        //panne du client
+                        String lastPseudo = usersSocket.get(userSocket);
+                        if (lastPseudo != null) {
+                            try {
+                                sendMessageNextServer("C:" + lastPseudo + ":DISCONNECT:");
+                                handleUserDead(lastPseudo, userSocket);
+                            } catch (IOException e) {
+                                e.printStackTrace();
                             }
-                        } else {
-                            System.out.println("CLIENT DISCONNECTED");
                         }
+                    } else {
+                        System.out.println("Pb Exception handle user");
                     }
                 }
             }
@@ -432,54 +455,98 @@ public class Server {
     }
 
     /**
-     * Lit les informations transmises et met a jour le serveur ressuscité
-     * @param oin
+     * Traiter la panne d'un client
+     *
+     * @param client
      */
-    public void updateReceiveByServerRessurect(final ObjectInputStream oin) {
-        // ici l'envoi du message de mise à jour
-        try {
-            System.out.println(" ---> MIS A JOUR PAR :  " + neighborBehindMe[0]
-                    + " SERVEUR RESSUSCITE DEBUT RECEPTION DES INFO DE MISE A JOUR  ---> ");
-            /* Hashtable contenant les utilisateurs connectés mais inactifs */
-            //usersConnectedTable = (Hashtable<String, User>) oin.readObject();
-            usersConnectedTable.putAll((Hashtable<String, User>) oin.readObject());
-            System.out.println("1");
-            /* Utilisateur en attente d'un adversaire */
-            userWait = (User) oin.readObject();
-            System.out.println("2");
-            /* Hashtable contenant les utilisateurs qui sont en train de jouer */
-            //usersPlayingTable = (Hashtable<String, User>) oin.readObject();
-            usersPlayingTable.putAll((Hashtable<String, User>) oin.readObject());
-            System.out.println("3");
-            /* Hashtable contenant les jeux en cours */
-            gamesTable = (Hashtable<String, Game>) oin.readObject();
-            System.out.println(" ---> MIS A JOUR PAR : " + neighborBehindMe[0]
-                    + "SERVEUR RESSUSCITE A JOUR : FIN RECEPTION ---> ");
-        } catch (Exception e) {
-            System.out.println("Echec de mise a jour du serveur ressuscité : le serveur lui meme");
-        }
+    private void handleUserDead(String client, final Socket userSocket) throws IOException {
 
+        //Mettre a jour l'etat de l'utilisateur
+        User userDead = findUserFromTable(client, usersConnectedTable);
+        if (userDead != null) {
+            System.out.println("[Master : Client " + client + " connecté est tombé en panne]");
+            changeUserStatus(client, Status.CONNECTED, Status.DISCONNECTED);
+            userDead = null;
+        } else if (userWaiting != null && userWaiting.getPseudo().equals(client)) {
+            System.out.println("[Master : Client " + client + " en attente est tombé en panne]");
+            changeUserStatus(client, Status.WAITING, Status.DISCONNECTED);
+            userWaiting = null;
+        } else {
+            userDead = findUserFromTable(client, usersPlayingTable);
+            changeUserStatus(client, Status.PLAYING, Status.DISCONNECTED);
+            System.out.println("[Master : Client " + client + " en train de jouer est tombé en panne]");
+
+            //Chercher s'il avait des parties en cours
+            Game g = gamesTable.get(userDead.getGameKey());
+            if (g != null) {
+                User u1 = g.getUser1();
+                User u2 = g.getUser2();
+                User uMain = g.getUserPlaying();
+
+                if (uMain.equals(u1) && uMain.equals(userDead)) {
+                    //le client en panne etait en train de jouer en 1er
+                    g.setScoreUser1(0);
+                    g.setScoreUserPlaying(0);
+                    g.setUserPlaying(u2);
+                    //envoyer des questions pour le 2eme joueur
+                    prepareQuestions(g);
+                    System.out.println("[Master : c'est à " + u2.getPseudo() + " de jouer]");
+                    sendMessage("C'est parti !!!", u2.getSocketOout());
+                    sendMessage("OBJETGAME", u2.getSocketOout());
+                    sendMessage(g, u2.getSocketOout());
+                } else if (uMain.equals(u2) && uMain.equals(userDead)) {
+                    //le client en panne etait en train de jouer en 2eme
+                    System.out.println("[Master : La partie entre " + g.getUser1().getPseudo()
+                            + " et " + g.getUser2().getPseudo() + " est terminée]");
+                    g.setScoreUser2(0);
+                    g.setScoreUserPlaying(0);
+                    g.setUserPlaying(null);
+                    //comparer les scores et envoyer le résultat
+                    if (g.getScoreUser1() > 0) {
+                        sendMessage("Gagné ! Vous avez battu votre adversaire !!!", u1.getSocketOout());
+                    } else {
+                        sendMessage("Egalite = Match nul !!!", u1.getSocketOout());
+                    }
+                    //Mettre a jour le statut de l'utilisateur
+                    u1.setGameKey("");
+                    u2.setGameKey("");
+                    changeUserStatus(u1.getPseudo(), Status.PLAYING, Status.CONNECTED);
+                    usersDisconnectedTable.remove(u2.getPseudo());
+                    //supprimer la partie
+                    removeGameFromGameTable(g.getGameKey());
+                    //envoyer le menu a l'utilisater encore vivant
+                    sendMessage(getMenuUser(), u1.getSocketOout());
+                } else if (uMain.equals(u2) && u1.equals(userDead)) {
+                    //le deuxieme joueur est vivant et est en train de jouer
+                    //le premier joueur qui a déjà joué vient de mourir
+                }
+            }
+        }
+        //Mettre a jour la liste utilisateur/socket
+        usersSocket.remove(userSocket);
     }
 
     /**
-     * Mettre à jour les informations du serveur ressuscité
+     * Lit les informations transmises et met a jour le serveur ressuscité
+     *
+     * @param oin
      */
-    public void updateServerRessurect() {
+    private void handleMsgUpdateServer(final ObjectInputStream oin) {
         try {
-            sleep(30000);
-            System.out.println(" ---> MIS A JOUR PAR LE SERVEUR : " + sId +
-                    " SERVEUR RESSUSCITE D'ENVOI DES INFO DE MISE A JOUR  ---> ");
-
-            sendMessageNextServer("UPDATE:::" + sId);
-            sendMessageNextServer((Hashtable<String, User>) usersConnectedTable);
-            sendMessageNextServer((User) userWait);
-            sendMessageNextServer((Hashtable<String, User>) usersPlayingTable);
-            sendMessageNextServer((Hashtable<String, Game>) gamesTable);
-
-            System.out.println(" ---> MIS A JOUR PAR LE SERVEUR  : " + sId +
-                    "   FIN MISE A JOUR SERVEUR ---> ");
+            System.out.println("=>Debut mise a jour du serveur par :  " + neighborServerBehindMe[0]);
+            /* Hashtable contenant les utilisateurs connectés mais inactifs */
+            usersConnectedTable.putAll((Hashtable<String, User>) oin.readObject());
+            /* Utilisateur en attente d'un adversaire */
+            userWaiting = (User) oin.readObject();
+            /* Hashtable contenant les utilisateurs qui sont en train de jouer */
+            usersPlayingTable.putAll((Hashtable<String, User>) oin.readObject());
+            /* Hashtable contenant les utilisateurs qui sont tombés en panne */
+            usersDisconnectedTable.putAll((Hashtable<String, User>) oin.readObject());
+            /* Hashtable contenant les jeux en cours */
+            gamesTable = (Hashtable<String, Game>) oin.readObject();
+            System.out.println("=>Fin mise a jour du serveur");
         } catch (Exception e) {
-            System.out.println("Echec de mise a jour du serveur ressuscité");
+            System.out.println("Echec de mise a jour du serveur ressuscité : le serveur lui meme");
         }
     }
 
@@ -498,45 +565,43 @@ public class Server {
 
         switch (contenu) {
             case "INIT":
-                System.out.println(" Mon voisin Back " + neighborBehindMe[0] + " à l'adresse " + neighborBehindMe[1]
-                        + " sur le port " + neighborBehindMe[2] + " est VIVANT");
+                System.out.println(" Mon voisin Back " + neighborServerBehindMe[0] + " à l'adresse " + neighborServerBehindMe[1]
+                        + " sur le port " + neighborServerBehindMe[2] + " est VIVANT");
                 socketBack = userSocket;
                 break;
             case "DEAD":
                 //info : le serveur1 est mort
                 setServerDead(Integer.valueOf(serveur1));
 
-                if (serveur1.equals(neighborServer[0])) {
+                if (serveur1.equals(neighborServerFrontMe[0])) {
                     //le voisin mort etait son voisin
-                    System.out.println("Connexion nouvelle au serveur : ");
                     //le serveur mort est son voisin
                     //recherche à se connecter a l'expediteur du message (maj)
-                    neighborServer = SearchServerById(Integer.valueOf(serveur2));
-                    neighborBehindMe = whoIsMyNeighborBehindMe(sId);
+                    neighborServerFrontMe = SearchServerById(Integer.valueOf(serveur2));
+                    neighborServerBehindMe = whoIsMyNeighborBehindMe(sId);
                     // lancement du client pour ce connecter au nouveau voisin
                     // Relance l'election du master
                     master = electMaster();
                     startServer();
-                    System.out.println("Connexion nouvelle au serveur : " + neighborServer[0]);
+                    System.out.println("Connexion nouvelle au serveur : " + neighborServerFrontMe[0]);
                 } else {
                     //le voisin mort n'etait pas son voisin
                     //election nouveau master
                     master = electMaster();
                     sendMessageNextServer(msg);
                 }
-                //retransmet le message a son voisin et fait la mise à jour
                 break;
             case "RESSURECT":
                 //mise a jour des serveurs disponibles que le nouveau serveur est vivant
                 setServerResurrect(Integer.valueOf(serveur2));
                 //reexecute son algo de determination de son voisin de derriere
-                neighborServer = whoIsMyNeighbor(sId);
-                neighborBehindMe = whoIsMyNeighborBehindMe(sId);
+                neighborServerFrontMe = whoIsMyNeighbor(sId);
+                neighborServerBehindMe = whoIsMyNeighborBehindMe(sId);
 
-                if (serveur2.equals(neighborServer[0])) {
+                if (serveur2.equals(neighborServerFrontMe[0])) {
                     System.out.println("Changement de serveur voisin  : ");
                     startServer();
-                    System.out.println("Connexion nouvelle effectuee au serveur : " + neighborServer[0]);
+                    System.out.println("Connexion nouvelle effectuee au serveur : " + neighborServerFrontMe[0]);
                     updateServerRessurect();
                 } else {
                     sendMessageNextServer(msg);
@@ -598,16 +663,16 @@ public class Server {
         //dans le cas ancien server est en panne, si l'utilisateur connecte le
         //nouveau serveur, on va just mettre a jour son socket
         if (findUserFromTable(client, usersConnectedTable) != null ||
-            findUserFromTable(client, usersPlayingTable) != null ||
-            (userWait != null && userWait.getPseudo().equals(client))){
+                findUserFromTable(client, usersPlayingTable) != null ||
+                (userWaiting != null && userWaiting.getPseudo().equals(client))) {
             User user = null;
-            if(findUserFromTable(client, usersConnectedTable) != null){
+            if (findUserFromTable(client, usersConnectedTable) != null) {
                 user = findUserFromTable(client, usersConnectedTable);
-            }else if(userWait != null && userWait.getPseudo().equals(client)){
-                user = userWait;
-            }else if(findUserFromTable(client, usersPlayingTable) != null){
+            } else if (userWaiting != null && userWaiting.getPseudo().equals(client)) {
+                user = userWaiting;
+            } else if (findUserFromTable(client, usersPlayingTable) != null) {
                 user = findUserFromTable(client, usersPlayingTable);
-            }else{
+            } else {
                 System.out.println("Unhandled error in method handleMsgConnectMaster");
             }
             user.setSocket(userSocket);
@@ -637,26 +702,24 @@ public class Server {
         String[] SplitServerMessage = msg.split(":", 4);
         String client = SplitServerMessage[1];
 
-        System.out.println("[Master : Client " + client + " s'est déconnecté]");
-
         //Mettre a jour l'etat de l'utilisateur
         User user1 = findUserFromTable(client, usersConnectedTable);
         if (user1 != null) {
+            System.out.println("[Master : Client " + client + " connecté s'est déconnecté]");
             changeUserStatus(client, Status.CONNECTED, Status.DISCONNECTED);
-        } else if (userWait.getPseudo().equals(client)) {
+            user1 = null;
+        } else if (userWaiting != null && userWaiting.getPseudo().equals(client)) {
+            System.out.println("[Master : Client " + client + " en attente s'est déconnecté]");
             changeUserStatus(client, Status.WAITING, Status.DISCONNECTED);
+            userWaiting = null;
         } else {
-            System.out.println("Impossible : Joueur déconnecté lorsqu'il jouait");
+            //impossible
         }
 
+        //Fermer la connexion
+        userSocket.close();
         //Mettre a jour la liste utilisateur/socket
         usersSocket.remove(userSocket);
-
-        //Supprimer utilisateur
-        //TODO Faut-il le supprimer definitivement?
-        user1 = null;
-
-        userSocket.close();
     }
 
     /**
@@ -672,15 +735,15 @@ public class Server {
 
         System.out.println("[Master : Client " + client + " souhaite jouer]");
 
-        if (userWait == null) {
+        if (userWaiting == null) {
             //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
             System.out.println("[Master : Client " + client + " attend]");
-            sendMessage("En attente d'un joueur...",oout);
+            sendMessage("En attente d'un joueur...", oout);
             changeUserStatus(client, Status.CONNECTED, Status.WAITING);
         } else {
             //s'il y a un client en attente, le jeu peut commencer
-            System.out.println("[Master : Client " + userWait.getPseudo() + " commence à jouer]");
-            User user1 = changeUserStatus(userWait.getPseudo(), Status.WAITING, Status.PLAYING);
+            System.out.println("[Master : Client " + userWaiting.getPseudo() + " commence à jouer]");
+            User user1 = changeUserStatus(userWaiting.getPseudo(), Status.WAITING, Status.PLAYING);
             User user2 = changeUserStatus(client, Status.CONNECTED, Status.PLAYING);
 
             Game game = new Game(user1, user2);
@@ -692,10 +755,10 @@ public class Server {
             prepareQuestions(game);
 
             //informer le client que le jeu débute (celui qui attend est prioritaire)
-            sendMessage("C'est parti !!!",user1.getSocketOout());
-            sendMessage("OBJETGAME",user1.getSocketOout());
-            sendMessage(game,user1.getSocketOout());
-            sendMessage("Merci de patienter. Client " + user1.getPseudo() + " est en train de jouer...",oout);
+            sendMessage("C'est parti !!!", user1.getSocketOout());
+            sendMessage("OBJETGAME", user1.getSocketOout());
+            sendMessage(game, user1.getSocketOout());
+            sendMessage("Merci de patienter. Client " + user1.getPseudo() + " est en train de jouer...", oout);
         }
     }
 
@@ -709,8 +772,7 @@ public class Server {
         String[] SplitServerMessage = msg.split(":", 4);
         String client = SplitServerMessage[1];
         String contenu = SplitServerMessage[3];
-        User user1 = null;
-        User user2 = null;
+        User user1, user2;
         Game gameTmp;
 
         System.out.println("[Master : Client " + client + " vient de répondre à toutes les questions]");
@@ -720,63 +782,85 @@ public class Server {
 
         if (game.getUserPlaying() == game.getUser1()) {
             //client1 a fini sa partie, client2 va commencer sa partie
+            System.out.println("[Master : C'est à " + game.getUser2().getPseudo() + " de jouer]");
             sendMessage("Client " + game.getUser2().getPseudo() + " est en train de jouer",
                     game.getUserPlaying().getSocketOout());
-
             //majUtilisateurActif
             game.setUserPlaying(game.getUser2());
             //preparer des questions pour le jeu
             prepareQuestions(game);
-
             //envoyer la question au client
             sendMessage("C'est parti !!!", game.getUser2().getSocketOout());
             sendMessage("OBJETGAME", game.getUser2().getSocketOout());
             sendMessage(game, game.getUser2().getSocketOout());
-
-            //creation nouvel objet a transmettre
-            gameTmp = new Game(game.getUser1(), game.getUser2());
-            gameTmp.setScoreUser1(game.getScoreUser1());
-            gameTmp.setScoreUser2(game.getScoreUser2());
-            gameTmp.setUserPlaying(game.getUser2());
-            //TODO transfert seulement des scores et du joueur en cours
         } else {
-            //creation nouvel objet a transmettre
-            gameTmp = new Game(game.getUser1(), game.getUser2());
-            gameTmp.setScoreUser1(game.getScoreUser1());
-            gameTmp.setScoreUser2(game.getScoreUser2());
-            gameTmp.setUserPlaying(null);
-            //TODO transfert seulement des scores et du joueur en cours
             //si le deuxieme client a fini sa partie, le jeu est terminé
             if (game.getScoreUser1() > game.getScoreUser2()) {
-                sendMessage("Gagné ! Vous avez battu votre adversaire !!!", game.getUser1().getSocketOout());
-                sendMessage("Perdu ... Votre adversaire vous a battu", game.getUser2().getSocketOout());
+                if (game.getUser1().getStatus() != Status.DISCONNECTED) {
+                    sendMessage("Gagné ! Vous avez battu votre adversaire !!!", game.getUser1().getSocketOout());
+                }
+                if (game.getUser2().getStatus() != Status.DISCONNECTED) {
+                    sendMessage("Perdu ... Votre adversaire vous a battu", game.getUser2().getSocketOout());
+                }
             } else if (game.getScoreUser1() < game.getScoreUser2()) {
-                sendMessage("Perdu ... Votre adversaire vous a battu!", game.getUser1().getSocketOout());
-                sendMessage("Gagné ! Vous avez battu votre adversaire !!!", game.getUser2().getSocketOout());
+                if (game.getUser1().getStatus() != Status.DISCONNECTED) {
+                    sendMessage("Perdu ... Votre adversaire vous a battu!", game.getUser1().getSocketOout());
+                }
+                if (game.getUser2().getStatus() != Status.DISCONNECTED) {
+                    sendMessage("Gagné ! Vous avez battu votre adversaire !!!", game.getUser2().getSocketOout());
+                }
             } else {
-                sendMessage("Egalite = Match nul !!!", game.getUser1().getSocketOout());
-                sendMessage("Egalite = Match nul !!!", game.getUser2().getSocketOout());
+                if (game.getUser1().getStatus() != Status.DISCONNECTED) {
+                    sendMessage("Egalite = Match nul !!!", game.getUser1().getSocketOout());
+                }
+                if (game.getUser2().getStatus() != Status.DISCONNECTED) {
+                    sendMessage("Egalite = Match nul !!!", game.getUser2().getSocketOout());
+                }
             }
-
-            user1 = game.getUser1();
-            user2 = game.getUser2();
-            user1.setGameKey("");
-            user2.setGameKey("");
-            game.setUserPlaying(null);
-            changeUserStatus(user1.getPseudo(), Status.PLAYING, Status.CONNECTED);
-            changeUserStatus(user2.getPseudo(), Status.PLAYING, Status.CONNECTED);
 
             System.out.println("[Master : La partie entre " + game.getUser1().getPseudo() +
                     " et " + game.getUser2().getPseudo() + " est terminée]");
 
-            //envoyer le menu au client
-            sendMessage(getMenuUser(),game.getUser1().getSocketOout());
-            sendMessage(getMenuUser(),game.getUser2().getSocketOout());
+            game.getUser1().setGameKey("");
+            game.getUser2().setGameKey("");
+            game.setUserPlaying(null);
+
+            if (game.getUser1().getStatus() == Status.DISCONNECTED) {
+                //le joueur1 est tombé en panne pendant la partie
+                changeUserStatus(game.getUser2().getPseudo(), Status.PLAYING, Status.CONNECTED);
+                usersDisconnectedTable.remove(game.getUser1().getPseudo());
+                //envoyer le menu au client qui reste
+                sendMessage(getMenuUser(), game.getUser2().getSocketOout());
+            } else {
+                //les deux joueurs n'ont pas quitté la partie
+                changeUserStatus(game.getUser1().getPseudo(), Status.PLAYING, Status.CONNECTED);
+                changeUserStatus(game.getUser2().getPseudo(), Status.PLAYING, Status.CONNECTED);
+                //envoyer le menu aux clients
+                sendMessage(getMenuUser(), game.getUser1().getSocketOout());
+                sendMessage(getMenuUser(), game.getUser2().getSocketOout());
+            }
         }
+
+        //creation nouvel objet a transmettre
+        User u1 = game.getUser1();
+        User u2 = game.getUser2();
+        gameTmp = new Game(u1, u2);
+        gameTmp.setScoreUser1(game.getScoreUser1());
+        gameTmp.setScoreUser2(game.getScoreUser2());
+        gameTmp.setUserPlaying(game.getUserPlaying());
 
         //Envoyer a mon voisin le message recu
         sendMessageNextServer("GAME:::");
         sendMessageNextServer(gameTmp);
+
+        if (game.getUserPlaying() == null) {
+            //La partie est terminée
+            removeGameFromGameTable(game.getGameKey());
+            if (game.getUser1().getStatus() == Status.DISCONNECTED) {
+                usersDisconnectedTable.remove(game.getUser1());
+            }
+        }
+
     }
 
     /**
@@ -828,11 +912,9 @@ public class Server {
         String client = SplitServerMessage[1];
         String contenu = SplitServerMessage[3];
 
-        System.out.println("[Client " + client + " vient de se connecter]");
-
         if (contenu.contains("OK")) {
             //Le serveur master a deja traité cette demande
-
+            System.out.println("[Client " + client + " vient de se connecter]");
             if (!closeToServerMaster()) {
                 sendMessageNextServer(msg);
             }
@@ -840,9 +922,9 @@ public class Server {
             User user = new User(client, userSocket, Status.CONNECTED, oout);
             addUserTable(user, usersConnectedTable);
         } else {
+            System.out.println("[Client " + client + " tente de se connecter]");
             //Demande non traitée precedemment par le master
             sendMessage("REDIRECTION:::" + master[0], oout);
-            //TODO Peut etre a completer
         }
     }
 
@@ -855,18 +937,55 @@ public class Server {
         String[] SplitServerMessage = msg.split(":", 4);
         String client = SplitServerMessage[1];
 
-        System.out.println("[Client " + client + " s'est déconnecté]");
-
-        User user1 = findUserFromTable(client, usersConnectedTable);
-        if (user1 != null) {
+        //Mettre a jour son statut
+        User userDead = findUserFromTable(client, usersConnectedTable);
+        if (userDead != null) {
+            System.out.println("[Client " + client + " connecté s'est déconnecté]");
             changeUserStatus(client, Status.CONNECTED, Status.DISCONNECTED);
-        } else if (userWait.getPseudo().equals(client)) {
+            userDead = null;
+        } else if (userWaiting != null && userWaiting.getPseudo().equals(client)) {
+            System.out.println("[Client " + client + " en attente s'est déconnecté]");
             changeUserStatus(client, Status.WAITING, Status.DISCONNECTED);
+            userWaiting = null;
         } else {
-            System.out.println("Impossible : Joueur déconnecté lorsqu'il jouait");
+            userDead = findUserFromTable(client, usersPlayingTable);
+            changeUserStatus(client, Status.PLAYING, Status.DISCONNECTED);
+            System.out.println("[Client " + client + " en train de jouer est tombé en panne]");
+
+            //Chercher s'il avait des parties en cours
+            Game g = gamesTable.get(userDead.getGameKey());
+            if (g != null) {
+                User u1 = g.getUser1();
+                User u2 = g.getUser2();
+                User uMain = g.getUserPlaying();
+
+                if (uMain.equals(u1) && uMain.equals(userDead)) {
+                    //le client en panne etait en train de jouer en 1er
+                    System.out.println("[C'est à " + u2.getPseudo() + " de jouer]");
+                    g.setScoreUser1(0);
+                    g.setScoreUserPlaying(0);
+                    g.setUserPlaying(u2);
+                } else if (uMain.equals(u2) && uMain.equals(userDead)) {
+                    //le client en panne etait en train de jouer en 2eme
+                    System.out.println("[La partie entre " + g.getUser1().getPseudo()
+                            + " et " + g.getUser2().getPseudo() + " est terminée]");
+                    g.setScoreUser2(0);
+                    g.setScoreUserPlaying(0);
+                    g.setUserPlaying(null);
+                    //Mettre a jour le statut de l'utilisateur
+                    u1.setGameKey("");
+                    u2.setGameKey("");
+                    changeUserStatus(u1.getPseudo(), Status.PLAYING, Status.CONNECTED);
+                    usersDisconnectedTable.remove(u2.getPseudo());
+                    //supprimer la partie
+                    removeGameFromGameTable(g.getGameKey());
+                } else if (uMain.equals(u2) && u1.equals(userDead)) {
+                    //le deuxieme joueur est vivant et est en train de jouer
+                    //le premier joueur qui a déjà joué vient de mourir
+                }
+                System.out.println("Handle disconnect non master");
+            }
         }
-        //TODO faut il le supprimer?
-        user1 = null;
     }
 
     /**
@@ -880,14 +999,14 @@ public class Server {
 
         System.out.println("[Client " + client + " souhaite jouer]");
 
-        if (userWait == null) {
+        if (userWaiting == null) {
             System.out.println("[Client " + client + " attend]");
             //s'il n'y a pas d'autres clients en attente, le client doit attendre un client
             changeUserStatus(client, Status.CONNECTED, Status.WAITING);
         } else {
             //s'il y a un client en attente, le jeu peut commencer
-            System.out.println("[Client " + userWait.getPseudo() + " commence à jouer]");
-            User user1 = changeUserStatus(userWait.getPseudo(), Status.WAITING, Status.PLAYING);
+            System.out.println("[Client " + userWaiting.getPseudo() + " commence à jouer]");
+            User user1 = changeUserStatus(userWaiting.getPseudo(), Status.WAITING, Status.PLAYING);
             User user2 = changeUserStatus(client, Status.CONNECTED, Status.PLAYING);
 
             Game game = new Game(user1, user2);
@@ -910,26 +1029,38 @@ public class Server {
         }
 
         //Mettre a jour la partie qui commence, en cours ou est fini
-        User user1 = game.getUser1();
-        User user2 = game.getUser2();
-        Game myGame = findGameFromGameTable(user1.getPseudo());
-        user1 = findUserFromTable(user1.getPseudo(), usersPlayingTable);
-        user2 = findUserFromTable(user2.getPseudo(), usersPlayingTable);
+        Game myGame = gamesTable.get(game.getGameKey());
+        User user1 = myGame.getUser1();
+        User user2 = myGame.getUser2();
+        User userPlay;
+        myGame.setScoreUser1(game.getScoreUser1());
+        myGame.setScoreUser2(game.getScoreUser2());
 
         if (game.getUserPlaying() != null) {
             //client1 a fini sa partie, client2 va commencer sa partie
             System.out.println("[Client " + game.getUser1().getPseudo() + " vient de répondre à toutes les questions]");
-            myGame = game;
+            System.out.println("[C'est à " + myGame.getUserPlaying().getPseudo() + " de jouer]");
+            userPlay = usersPlayingTable.get(game.getUserPlaying().getPseudo());
+            myGame.setUserPlaying(userPlay);
         } else {
             //la partie est finie
             System.out.println("[La partie entre " + game.getUser1().getPseudo() + " et " +
                     "" + game.getUser2().getPseudo() + " est terminée ]");
-            changeUserStatus(user1.getPseudo(), Status.PLAYING, Status.CONNECTED);
-            changeUserStatus(user2.getPseudo(), Status.PLAYING, Status.CONNECTED);
-            removeGameFromGameTable(user1.getGameKey());
+            removeGameFromGameTable(myGame.getGameKey());
             user1.setGameKey("");
             user2.setGameKey("");
+
+            if (user1.getStatus() == Status.DISCONNECTED) {
+                //le premier joueur est tombé en panne
+                changeUserStatus(user2.getPseudo(), Status.PLAYING, Status.CONNECTED);
+                usersDisconnectedTable.remove(user1.getPseudo());
+            } else {
+                //les deux joueurs sont forcement vivants
+                changeUserStatus(user1.getPseudo(), Status.PLAYING, Status.CONNECTED);
+                changeUserStatus(user2.getPseudo(), Status.PLAYING, Status.CONNECTED);
+            }
         }
+
     }
 
     /************************************************GESTION DES UTILISATEURS***************************************/
@@ -1017,6 +1148,9 @@ public class Server {
      */
     private Game findGameFromGameTable(String client) {
         User user = findUserFromTable(client, usersPlayingTable);
+        if (user == null) {
+            return null;
+        }
         return gamesTable.get(user.getGameKey());
     }
 
@@ -1038,11 +1172,11 @@ public class Server {
                 removeUserFromTable(u, usersConnectedTable);
                 break;
             case WAITING:
-                u = userWait;
-                userWait = null;
+                u = userWaiting;
+                userWaiting = null;
                 break;
             case DISCONNECTED:
-                //TODO cas impossible
+                //cas impossible
                 break;
             default:
                 //Probleme statut
@@ -1059,10 +1193,11 @@ public class Server {
                 u.setStatus(Status.CONNECTED);
                 break;
             case WAITING:
-                userWait = u;
+                userWaiting = u;
                 u.setStatus(Status.WAITING);
                 break;
             case DISCONNECTED:
+                usersDisconnectedTable.put(pseudo, u);
                 u.setStatus(Status.DISCONNECTED);
                 break;
             default:
@@ -1132,7 +1267,7 @@ public class Server {
             serverNumber = scan.nextLine();
 
             try {
-                int tmpNb = Integer.parseInt(serverNumber);
+                Integer.parseInt(serverNumber);
                 checkScan = true;
             } catch (NumberFormatException nb) {
                 System.out.println("Saisie incorrecte");
