@@ -7,23 +7,28 @@ import java.net.Socket;
 import java.util.HashMap;
 import java.util.Scanner;
 
+import static java.lang.Thread.sleep;
+
 public class Client {
 
     private String pseudo;
     private Socket socket;
+    private ObjectOutputStream oout;
+    private ObjectInputStream oin;
+    private int sId;
     private String addressServer;
     private int portServer;
     private static HashMap<Integer, String> mapServer = new HashMap<Integer, String>();
-
-    static {
-        //Initialisation liste serveurs
-        saveListServer();
-    }
 
     private Game game = null;
     private int numeroQuestion = 0;
     private int score = 0;
     private boolean quitVoluntarily = false;
+
+    static {
+        //Initialisation liste serveurs
+        saveListServer();
+    }
 
     /**
      * Constructeur du Client
@@ -75,6 +80,7 @@ public class Client {
      * @param nbrServer
      */
     public void configureServer(int nbrServer) {
+        sId = nbrServer;
         String[] detailS = mapServer.get(nbrServer).split(":");
         addressServer = detailS[0];
         portServer = Integer.parseInt(detailS[1]);
@@ -100,40 +106,61 @@ public class Client {
      */
     public void connectServer(String addressServer, int port) {
         try {
-            this.socket = new Socket(addressServer, port);
-            ObjectOutputStream oout = new ObjectOutputStream(socket.getOutputStream());
-            final ObjectInputStream oin = new ObjectInputStream(socket.getInputStream());
+            socket = new Socket(addressServer, port);
+            oout = new ObjectOutputStream(socket.getOutputStream());
+            oin = new ObjectInputStream(socket.getInputStream());
 
             //Envoyer le pseudo pour connecter le serveur
             sendMessage("C:" + this.pseudo + ":CONNECT:", oout);
+
             //creer un thread pour recuperer les messages du serveur
             new Thread(new Runnable() {
                 public void run() {
-                    handleMsgFromServer(oin);
+                    handleMsgFromServer();
                 }
             }).start();
             //Traiter les messages envoye au serveur
-            handleMsgSendToServer(oout);
-            socket.close();
+            handleMsgSendToServer();
+
         } catch (IOException ex) {
-            System.out.println("Can't connect server");
+            System.out.println("Echec de connecter serveur " + sId);
+            sId = (sId + 1)%4;
+            System.out.println("Essayer de connecter serveur " + sId);
+            configureServer(sId);
+            connectServer(addressServer, portServer);
         }
     }
 
     /**
      * Traiter les messages recus
      *
-     * @param oin
      */
-    private void handleMsgFromServer(ObjectInputStream oin) {
+    private void handleMsgFromServer() {
         String ackServer;
         try {
             while ((ackServer = (String) oin.readObject()) != null) {
+                String[] SplitServerMessage = ackServer.split(":", 4);
+                String typeMessage = SplitServerMessage[0];
                 //si le message est "OBJETGAME", le message suivant contient l'objet Game
-                if (ackServer.equals("OBJETGAME")) {
+                if (typeMessage.equals("OBJETGAME")) {
                     game = (Game) oin.readObject();
                     displayQuestion(game, numeroQuestion);
-                } else {
+                } else if(typeMessage.equals("REDIRECTION")) {
+                    //fermer ancien socket
+                    oout.close();
+                    oin.close();
+                    socket.close();
+                    //mettre a jour server master
+                    sId = Integer.parseInt(SplitServerMessage[3]);
+                    configureServer(sId);
+                    //connecter nouveau serveur master
+                    socket = new Socket(addressServer, portServer);
+                    oout = new ObjectOutputStream(socket.getOutputStream());
+                    oin = new ObjectInputStream(socket.getInputStream());
+
+                    //Envoyer le pseudo pour connecter le serveur
+                    sendMessage("C:" + this.pseudo + ":CONNECT:", oout);
+                }else {
                     System.out.println(ackServer);
                 }
             }
@@ -141,17 +168,36 @@ public class Client {
             if (quitVoluntarily) {
                 System.out.println("vous avez quitté");
             } else {
-                System.out.println("serveur est mort");
+                try {
+                    //fermer ancien socket
+                    oout.close();
+                    oin.close();
+                    socket.close();
 
-                //TODO ouvrir une connexion avec le serveur suivant au master précédent
-                /*
-                Faire{
-                    //tenter de se connecter au serveur master + 1
-                    //si connexion ouverte
-                        //si msg recu = MASTER, serveur master trouvé et fermer connexion
-                    master = (master + 1)%4
-                }Tant que (serveur master non trouvé){
-                 */
+                    System.out.println("Le serveur " + sId + " est mort");
+                    System.out.println("Attendez 10 seconds pour connecter serveur " + (sId + 1)%4 + "...");
+
+                    sleep(10000);
+
+                    //mettre a jour server master
+                    sId = (sId + 1)%4;
+                    configureServer(sId);
+
+                    //connecter nouveau serveur master
+                    socket = new Socket(addressServer, portServer);
+                    oout = new ObjectOutputStream(socket.getOutputStream());
+                    oin = new ObjectInputStream(socket.getInputStream());
+
+                    //Envoyer le pseudo pour connecter le serveur
+                    sendMessage("C:" + this.pseudo + ":CONNECT:", oout);
+
+                    //relancer la methode handleMsgFromServer pour recevoir le message du serveur
+                    handleMsgFromServer();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
             }
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
@@ -161,14 +207,12 @@ public class Client {
     /**
      * Traiter les messages envoyé au serveur
      *
-     * @param oout
      * @throws IOException
      */
-    private void handleMsgSendToServer(ObjectOutputStream oout) throws IOException {
+    private void handleMsgSendToServer() throws IOException {
         while (true) {
             Scanner reader = new Scanner(System.in);
             String msg = reader.nextLine();
-
             if (msg.equals("quit")) {
                 //demande de deconnexion
                 sendMessage("C:" + this.pseudo + ":DISCONNECT:", oout);

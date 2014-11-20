@@ -368,7 +368,7 @@ public class Server {
         new Thread(new Runnable() {
             public void run() {
                 ObjectInputStream oin;
-                final ObjectOutputStream oout;
+                ObjectOutputStream oout;
                 String[] SplitServerMessage;
 
                 try {
@@ -406,7 +406,10 @@ public class Server {
                         System.out.println(" Mon voisin Back " + neighborBehindMe[0] + " à l'adresse "
                                 + neighborBehindMe[1] + " sur le port " + neighborBehindMe[2] + " est MORT");
                         try {
-                            sendMessageNextServer("S:" + neighborBehindMe[0] + ":" + sId + ":" + "DEAD");
+                            sendMessageNextServer("S:" + neighborBehindMe[0] + ":" + sId + ":DEAD");
+                            setServerDead(Integer.valueOf(neighborBehindMe[0]));
+                            neighborBehindMe = whoIsMyNeighborBehindMe(sId);
+                            master = electMaster();
                         } catch (IOException e) {
                             //e.printStackTrace();
                         }
@@ -592,17 +595,37 @@ public class Server {
 
         System.out.println("[Master : Client " + client + " vient de se connecter]");
 
-        //Creer le nouvel utilisateur
-        User user = new User(client, userSocket, Status.CONNECTED, oout);
-        addUserTable(user, usersConnectedTable);
+        //dans le cas ancien server est en panne, si l'utilisateur connecte le
+        //nouveau serveur, on va just mettre a jour son socket
+        if (findUserFromTable(client, usersConnectedTable) != null ||
+            findUserFromTable(client, usersPlayingTable) != null ||
+            (userWait != null && userWait.getPseudo().equals(client))){
+            User user = null;
+            if(findUserFromTable(client, usersConnectedTable) != null){
+                user = findUserFromTable(client, usersConnectedTable);
+            }else if(userWait != null && userWait.getPseudo().equals(client)){
+                user = userWait;
+            }else if(findUserFromTable(client, usersPlayingTable) != null){
+                user = findUserFromTable(client, usersPlayingTable);
+            }else{
+                System.out.println("Unhandled error in method handleMsgConnectMaster");
+            }
+            user.setSocket(userSocket);
+            user.setSocketOout(oout);
+            sendMessage("vous avez déja connecté serveur " + sId, oout);
+            sendMessage("vous pouvez continuer", oout);
+        } else {
+            //Creer le nouvel utilisateur
+            User user = new User(client, userSocket, Status.CONNECTED, oout);
+            addUserTable(user, usersConnectedTable);
 
-        //ajouter dans la liste des utilisateurs/sockets
-        usersSocket.put(userSocket, client);
+            //ajouter dans la liste des utilisateurs/sockets
+            usersSocket.put(userSocket, client);
 
-        //Envoyer le menu client
-        sendMessage("============================\n|   Bienvenue " + client + "           |\n" + getMenuUser(), oout);
+            //Envoyer le menu client
+            sendMessage("============================\n|   Bienvenue " + client + "           |\n" + getMenuUser(), oout);
+        }
     }
-
     /**
      * traiter les messages du type DISCONNECT
      *
@@ -800,7 +823,7 @@ public class Server {
      * @param userSocket
      * @param oout
      */
-    private void handleMsgConnectNonMaster(String msg, final Socket userSocket, ObjectOutputStream oout) throws IOException {
+    private void handleMsgConnectNonMaster(String msg, Socket userSocket, ObjectOutputStream oout) throws IOException {
         String[] SplitServerMessage = msg.split(":", 4);
         String client = SplitServerMessage[1];
         String contenu = SplitServerMessage[3];
