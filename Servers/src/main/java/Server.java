@@ -400,7 +400,7 @@ public class Server {
                         String msg = (String) oin.readObject();
                         SplitServerMessage = msg.split(":", 4);
                         String source = SplitServerMessage[0];
-
+                        System.out.println("____Msg recu="+msg);
                         if (source.equals("S")) {
                             //L'expéditeur du message est un serveur
                             analyzeMessageSentByServer(msg, userSocket);
@@ -465,11 +465,11 @@ public class Server {
         User userDead = findUserFromTable(client, usersConnectedTable);
         if (userDead != null) {
             System.out.println("[Master : Client " + client + " connecté est tombé en panne]");
-            changeUserStatus(client, Status.CONNECTED, Status.DISCONNECTED);
-            userDead = null;
+            //changeUserStatus(client, Status.CONNECTED, Status.DISCONNECTED);
+            usersConnectedTable.remove(userDead);
         } else if (userWaiting != null && userWaiting.getPseudo().equals(client)) {
             System.out.println("[Master : Client " + client + " en attente est tombé en panne]");
-            changeUserStatus(client, Status.WAITING, Status.DISCONNECTED);
+            //changeUserStatus(client, Status.WAITING, Status.DISCONNECTED);
             userWaiting = null;
         } else {
             userDead = findUserFromTable(client, usersPlayingTable);
@@ -626,8 +626,6 @@ public class Server {
 
         switch (typemsg) {
             case "CONNECT":
-                //Envoyer a son voisin le message avec le contenu modifie
-                sendMessageNextServer(msg + "OK");
                 handleMsgConnectMaster(msg, userSocket, oout);
                 break;
             case "DISCONNECT":
@@ -665,11 +663,23 @@ public class Server {
         User user = findUserByPseudo(client);
 
         if (user != null){
+            //L'utilisateur existe deja
+            //Envoyer a son voisin le message avec le contenu modifie
+            sendMessageNextServer(msg + "LAST");
+
+            if(!usersSocket.containsKey(userSocket)){
+                //Si le serveur est un nouveau serveur master
+                //=>maj de la liste des sockets qu'il n'avait pas
+                usersSocket.put(userSocket, client);
+            }
             user.setSocket(userSocket);
             user.setSocketOout(oout);
-            sendMessage("vous avez déja connecté serveur " + sId, oout);
+            sendMessage("vous etes déja connecté au serveur " + sId, oout);
             sendMessage("vous pouvez continuer", oout);
         } else {
+            //L'utilisateur n'existe pas
+            //Envoyer a son voisin le message avec le contenu modifie
+            sendMessageNextServer(msg + "OK");
             //Creer le nouvel utilisateur
             user = new User(client, userSocket, Status.CONNECTED, oout);
             addUserTable(user, usersConnectedTable);
@@ -695,11 +705,11 @@ public class Server {
         User user1 = findUserFromTable(client, usersConnectedTable);
         if (user1 != null) {
             System.out.println("[Master : Client " + client + " connecté s'est déconnecté]");
-            changeUserStatus(client, Status.CONNECTED, Status.DISCONNECTED);
-            user1 = null;
+            //changeUserStatus(client, Status.CONNECTED, Status.DISCONNECTED);
+            usersConnectedTable.remove(user1);
         } else if (userWaiting != null && userWaiting.getPseudo().equals(client)) {
             System.out.println("[Master : Client " + client + " en attente s'est déconnecté]");
-            changeUserStatus(client, Status.WAITING, Status.DISCONNECTED);
+            //changeUserStatus(client, Status.WAITING, Status.DISCONNECTED);
             userWaiting = null;
         } else {
             //impossible
@@ -838,6 +848,8 @@ public class Server {
         gameTmp.setScoreUser2(game.getScoreUser2());
         gameTmp.setUserPlaying(game.getUserPlaying());
 
+        System.out.println("Game=>"+game.getGameKey());
+
         //Envoyer a mon voisin le message recu
         sendMessageNextServer("GAME:::");
         sendMessageNextServer(gameTmp);
@@ -846,7 +858,7 @@ public class Server {
             //La partie est terminée
             removeGameFromGameTable(game.getGameKey());
             if (game.getUser1().getStatus() == Status.DISCONNECTED) {
-                usersDisconnectedTable.remove(game.getUser1());
+                usersDisconnectedTable.remove(game.getUser1().getPseudo());
             }
         }
 
@@ -910,9 +922,16 @@ public class Server {
             //ajouter dans la liste des utilisateurs connectés
             User user = new User(client, userSocket, Status.CONNECTED, oout);
             addUserTable(user, usersConnectedTable);
-        } else {
+        } else if(contenu.contains("LAST")){
+            //Utilisateur déjà existant
+            //Rien a faire
+            System.out.println("[Client " + client + " est de nouveau connecté]");
+            if (!closeToServerMaster()) {
+                sendMessageNextServer(msg);
+            }
+        }else{
             System.out.println("[Client " + client + " tente de se connecter]");
-            //Demande non traitée precedemment par le master
+            //Demande venant directement du client
             sendMessage("REDIRECTION:::" + master[0], oout);
         }
     }
@@ -930,11 +949,13 @@ public class Server {
         User userDead = findUserFromTable(client, usersConnectedTable);
         if (userDead != null) {
             System.out.println("[Client " + client + " connecté s'est déconnecté]");
-            changeUserStatus(client, Status.CONNECTED, Status.DISCONNECTED);
-            userDead = null;
+            //changeUserStatus(client, Status.CONNECTED, Status.DISCONNECTED);
+            //usersDisconnectedTable.remove(userDead.getPseudo());
+            usersConnectedTable.remove(userDead);
         } else if (userWaiting != null && userWaiting.getPseudo().equals(client)) {
             System.out.println("[Client " + client + " en attente s'est déconnecté]");
-            changeUserStatus(client, Status.WAITING, Status.DISCONNECTED);
+            //changeUserStatus(client, Status.WAITING, Status.DISCONNECTED);
+            //usersDisconnectedTable.remove(userDead.getPseudo());
             userWaiting = null;
         } else {
             userDead = findUserFromTable(client, usersPlayingTable);
@@ -972,7 +993,7 @@ public class Server {
                     //le deuxieme joueur est vivant et est en train de jouer
                     //le premier joueur qui a déjà joué vient de mourir
                 }
-                System.out.println("Handle disconnect non master");
+                //System.out.println("Handle disconnect non master");
             }
         }
     }
@@ -1016,9 +1037,11 @@ public class Server {
             sendMessageNextServer("GAME:::");
             sendMessageNextServer(game);
         }
-
+        System.out.println("réception message Game non master");
+        //System.out.println("Clé de game="+game.getGameKey());
         //Mettre a jour la partie qui commence, en cours ou est fini
         Game myGame = gamesTable.get(game.getGameKey());
+
         User user1 = myGame.getUser1();
         User user2 = myGame.getUser2();
         User userPlay;
