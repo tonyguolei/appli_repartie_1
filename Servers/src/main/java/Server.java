@@ -1070,7 +1070,7 @@ public class Server {
     }
 
     /**
-     *
+     * Renvoie l'utilisateur s'il existe
      * @param pseudo
      * @return
      */
