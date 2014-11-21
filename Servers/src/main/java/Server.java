@@ -446,8 +446,6 @@ public class Server {
                                 e.printStackTrace();
                             }
                         }
-                    } else {
-                        System.out.println("Pb Exception handle user");
                     }
                 }
             }
@@ -706,7 +704,7 @@ public class Server {
         if (user1 != null) {
             System.out.println("[Master : Client " + client + " connecté s'est déconnecté]");
             //changeUserStatus(client, Status.CONNECTED, Status.DISCONNECTED);
-            usersConnectedTable.remove(user1);
+            usersConnectedTable.remove(user1.getPseudo());
         } else if (userWaiting != null && userWaiting.getPseudo().equals(client)) {
             System.out.println("[Master : Client " + client + " en attente s'est déconnecté]");
             //changeUserStatus(client, Status.WAITING, Status.DISCONNECTED);
@@ -714,11 +712,10 @@ public class Server {
         } else {
             //impossible
         }
-
-        //Fermer la connexion
-        userSocket.close();
         //Mettre a jour la liste utilisateur/socket
         usersSocket.remove(userSocket);
+        //Fermer la connexion
+        userSocket.close();
     }
 
     /**
@@ -908,7 +905,7 @@ public class Server {
      * @param userSocket
      * @param oout
      */
-    private void handleMsgConnectNonMaster(String msg, Socket userSocket, ObjectOutputStream oout) throws IOException {
+    private void handleMsgConnectNonMaster(String msg, final Socket userSocket, ObjectOutputStream oout) throws IOException {
         String[] SplitServerMessage = msg.split(":", 4);
         String client = SplitServerMessage[1];
         String contenu = SplitServerMessage[3];
@@ -1050,10 +1047,10 @@ public class Server {
 
         if (game.getUserPlaying() != null) {
             //client1 a fini sa partie, client2 va commencer sa partie
-            System.out.println("[Client " + game.getUser1().getPseudo() + " vient de répondre à toutes les questions]");
-            System.out.println("[C'est à " + myGame.getUserPlaying().getPseudo() + " de jouer]");
             userPlay = usersPlayingTable.get(game.getUserPlaying().getPseudo());
             myGame.setUserPlaying(userPlay);
+            System.out.println("[Client " + game.getUser1().getPseudo() + " vient de répondre à toutes les questions]");
+            System.out.println("[C'est à " + game.getUserPlaying().getPseudo() + " de jouer]");
         } else {
             //la partie est finie
             System.out.println("[La partie entre " + game.getUser1().getPseudo() + " et " +
