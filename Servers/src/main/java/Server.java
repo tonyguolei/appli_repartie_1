@@ -1073,43 +1073,61 @@ public class Server {
     }
 
     /**
-     * ligne de commande pour gerer le serveur
+     * ligne de commande pour debogger et tester le serveur
      * @param scan
      */
     public void handleCmdLine(Scanner scan){
+        System.out.println("Vous pouvez utiliter la command \"help\" pour consulter les commandes");
         while (true) {
             String cmd = scan.nextLine();
             switch(cmd) {
                 case "kill":
+                    System.out.println("le serveur " + sId + " est mort");
                     System.exit(0);
                     break;
-                case "show master":
+                case "master":
                     System.out.println("Serveur master est: " + master[0]);
                     break;
-                case "show neighborServerBehindMe":
-                    System.out.println(" Mon voisin derriere est " + neighborServerBehindMe[0] + " à l'adresse " + neighborServerBehindMe[1]
+                case "neighborBehind":
+                    System.out.println("Mon voisin derriere est " + neighborServerBehindMe[0] + " à l'adresse " + neighborServerBehindMe[1]
                             + " sur le port " + neighborServerBehindMe[2]);
                     break;
-                case "show neighborServerFrontMe":
-                    System.out.println(" Mon voisin devant est " + neighborServerFrontMe[0] + " à l'adresse " + neighborServerFrontMe[1]
+                case "neighborFront":
+                    System.out.println("Mon voisin devant est " + neighborServerFrontMe[0] + " à l'adresse " + neighborServerFrontMe[1]
                             + " sur le port " + neighborServerFrontMe[2]);
                     break;
-                case "show usersConnected":
+                case "usersConnected":
                     displayUserTable(usersConnectedTable);
                     break;
-                case "show usersDisconnected":
+                case "usersDisconnected":
                     displayUserTable(usersDisconnectedTable);
                     break;
-                case "show usersPlaying":
+                case "usersPlaying":
                     displayUserTable(usersPlayingTable);
                     break;
-                case "show usersWaiting":
-                    System.out.println("Pseudo: " + userWaiting.getPseudo() + " Status: " + userWaiting.getStatus());
+                case "userWaiting":
+                    if(userWaiting != null) {
+                        System.out.println("Pseudo: " + userWaiting.getPseudo() + " Status: " + userWaiting.getStatus());
+                    }else{
+                        System.out.println("il n'y a pas de l'utilisateur en attente");
+                    }
                     break;
-                case "show game":
+                case "game":
                     displayGameTable(gamesTable);
                     break;
+                case "help":
+                    System.out.println("-kill               Arreter le serveur");
+                    System.out.println("-master             Afficher le serveur master");
+                    System.out.println("-neighborBehind     Afficher le serveur derriere ce serveur");
+                    System.out.println("-neighborFront      Afficher le serveur devant ce serveur");
+                    System.out.println("-usersConnected     Afficher les utilisateurs connectés");
+                    System.out.println("-usersDisconnected  Afficher les utilisateurs déconnectés");
+                    System.out.println("-usersPlaying       Afficher les utilisateurs qui sont en train de jouer");
+                    System.out.println("-usersWaiting       Afficher l'utilisateur en attente");
+                    System.out.println("-game               Afficher les games");
+                    break;
                 default:
+                    System.out.println("La commande n'existe pas");
                     break;
             }
         }
@@ -1398,6 +1416,7 @@ public class Server {
         //Election du master au debut
         master = server.electMaster();
 
+        //lancer la ligne de commande
         server.handleCmdLine(scan);
     }
 }
