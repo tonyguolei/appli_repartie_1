@@ -168,7 +168,7 @@ public class Server {
                 }
             }
         }).start();
-    }
+}
 
     /**
      * Permet la lecture du fichier de configuration des serveurs
@@ -1072,6 +1072,86 @@ public class Server {
 
     }
 
+    /**
+     * ligne de commande pour gerer le serveur
+     * @param scan
+     */
+    public void handleCmdLine(Scanner scan){
+        while (true) {
+            String cmd = scan.nextLine();
+            switch(cmd) {
+                case "kill":
+                    System.exit(0);
+                    break;
+                case "show master":
+                    System.out.println("Serveur master est: " + master[0]);
+                    break;
+                case "show neighborServerBehindMe":
+                    System.out.println(" Mon voisin derriere est " + neighborServerBehindMe[0] + " à l'adresse " + neighborServerBehindMe[1]
+                            + " sur le port " + neighborServerBehindMe[2]);
+                    break;
+                case "show neighborServerFrontMe":
+                    System.out.println(" Mon voisin devant est " + neighborServerFrontMe[0] + " à l'adresse " + neighborServerFrontMe[1]
+                            + " sur le port " + neighborServerFrontMe[2]);
+                    break;
+                case "show usersConnected":
+                    displayUserTable(usersConnectedTable);
+                    break;
+                case "show usersDisconnected":
+                    displayUserTable(usersDisconnectedTable);
+                    break;
+                case "show usersPlaying":
+                    displayUserTable(usersPlayingTable);
+                    break;
+                case "show usersWaiting":
+                    System.out.println("Pseudo: " + userWaiting.getPseudo() + " Status: " + userWaiting.getStatus());
+                    break;
+                case "show game":
+                    displayGameTable(gamesTable);
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    /**
+     * afficher le contenu de les tables users
+     * @param table
+     */
+    public void displayUserTable (Hashtable table){
+        if(table.isEmpty()){
+            System.out.println("il n'y a pas de l'utilisateur dans cette table");
+        }else {
+            for (Iterator it = table.keySet().iterator(); it.hasNext(); ) {
+                String key = (String) it.next();
+                Object user = table.get(key);
+                System.out.println("=============================================");
+                System.out.println("Pseudo: " + ((User) user).getPseudo() + " Status: " + ((User) user).getStatus());
+            }
+        }
+    }
+
+    /**
+     * afficher le contenu de la table Game
+     * @param table
+     */
+    public void displayGameTable (Hashtable table){
+        if(table.isEmpty()){
+            System.out.println("il n'y a pas de game");
+        }else {
+            for (Iterator it = table.keySet().iterator(); it.hasNext(); ) {
+                String key = (String) it.next();
+                Object game = table.get(key);
+                System.out.println("=============================================");
+                System.out.println("User1 Pseudo: " + ((Game) game).getUser1().getPseudo());
+                System.out.println("User1 Score: " + ((Game) game).getScoreUser1());
+                System.out.println("User2: " + ((Game) game).getUser2().getPseudo());
+                System.out.println("User2 Score: " + ((Game) game).getScoreUser2());
+                System.out.println("User Playing: " + ((Game) game).getUserPlaying().getPseudo());
+            }
+        }
+    }
     /************************************************GESTION DES UTILISATEURS***************************************/
 
     /**
@@ -1317,6 +1397,7 @@ public class Server {
         server.startServer();
         //Election du master au debut
         master = server.electMaster();
-    }
 
+        server.handleCmdLine(scan);
+    }
 }
