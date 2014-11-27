@@ -11,20 +11,29 @@ import static java.lang.Thread.sleep;
 
 public class Client {
 
+    /**
+     * **********UTILISATEUR ET PARTIES**************
+     */
     private String pseudo;
-    private Socket socket;
-    private ObjectOutputStream oout;
-    private ObjectInputStream oin;
-    private int sId;
-    private String addressServer;
-    private int portServer;
-    private static HashMap<Integer, String> mapServer = new HashMap<Integer, String>();
-
     private Game game = null;
     private int numeroQuestion = 0;
     private int score = 0;
     private boolean quitVoluntarily = false;
 
+    /**
+     * **********GESTION COMMUNICATION SERVEUR**************
+     */
+    private int sId;
+    private String addressServer;
+    private int portServer;
+    private Socket socket;
+    private ObjectOutputStream oout;
+    private ObjectInputStream oin;
+
+    /**
+     * **********GESTION AUTRES SERVEURS****
+     */
+    private static HashMap<Integer, String> mapServer = new HashMap<Integer, String>();
     static {
         //Initialisation liste serveurs
         saveListServer();
@@ -137,6 +146,7 @@ public class Client {
      */
     private void handleMsgFromServer() {
         String ackServer;
+        int numeroQuestion = 0;
         try {
             while ((ackServer = (String) oin.readObject()) != null) {
                 String[] SplitServerMessage = ackServer.split(":", 4);
@@ -166,17 +176,15 @@ public class Client {
             }
         } catch (IOException e) {
             if (quitVoluntarily) {
-                System.out.println("vous avez quitté");
+                System.out.println("vous avez quitté l'application");
             } else {
                 try {
                     //fermer ancien socket
                     oout.close();
                     oin.close();
                     socket.close();
-
-                    System.out.println("Le serveur " + sId + " est mort");
-                    System.out.println("Attendez 10 seconds pour connecter serveur " + (sId + 1)%4 + "...");
-
+                    System.out.println("Le serveur " + sId + " est tombé en panne");
+                    System.out.println("Merci de patienter pendant la reconnexion au serveur " + (sId + 1)%4 + "...");
                     sleep(10000);
 
                     //mettre a jour server master

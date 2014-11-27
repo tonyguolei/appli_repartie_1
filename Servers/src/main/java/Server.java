@@ -1,13 +1,6 @@
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.BindException;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
+import java.net.*;
 import java.util.*;
 import java.io.*;
-
 import static java.lang.Thread.sleep;
 
 public class Server {
@@ -25,8 +18,8 @@ public class Server {
     private Socket socketFront;
     private Socket socketBack;
     private int nbServers = 4;
-    /* master[0] = idServeur, [1] = adresseServeur, [2] = portServeur, [3] = etatServeur */
-    private static String[] master;
+    /* serverMaster[0] = idServeur, [1] = adresseServeur, [2] = portServeur, [3] = etatServeur */
+    private static String[] serverMaster;
     /* neighborServerFrontMe[0] = idServeur, [1] = adresseServeur, [2] = portServeur, [3] = etatServeur */
     private String[] neighborServerFrontMe;
     /* neighborServerBehindMe[0] = idServeur, [1] = adresseServeur, [2] = portServeur, [3] = etatServeur */
@@ -36,7 +29,6 @@ public class Server {
     /**
      * ********GESTION DES FLUX***************
      */
-    //private static ObjectInputStream oinFront;
     private static ObjectOutputStream ooutFront;
     /**
      * *********GESTION DES UTILISATEURS ET DES PARTIES*******
@@ -118,7 +110,6 @@ public class Server {
         listServer.set(sID-1, serverResurrect);
     }
 
-
     /**
      * Mettre à jour les informations du serveur ressuscité
      */
@@ -128,7 +119,7 @@ public class Server {
             //System.out.println("=>Début mise a jour par le serveur : " + sId);
             //sendMessageNextServer("UPDATE:::" + sId);
             sendMessageNextServer("UPDATE:::");
-            sendMessageNextServer((String[])master);
+            sendMessageNextServer((String[]) serverMaster);
             sendMessageNextServer((Hashtable<String, User>) usersConnectedTable);
             sendMessageNextServer((User) userWaiting);
             sendMessageNextServer((Hashtable<String, User>) usersPlayingTable);
@@ -149,7 +140,7 @@ public class Server {
     private void createServer(int port) throws IOException {
         setServer(new ServerSocket(port));
         if(!resurrect) {
-            master = electMaster();
+            serverMaster = electMaster();
         }
         new Thread(new Runnable() {
             public void run() {
@@ -192,8 +183,8 @@ public class Server {
     }
 
     /**
-     * Gère l'élection du serveur master
-     * (Le master est le serveur vivant ayant le plus petit ID)
+     * Gère l'élection du serveur serverMaster
+     * (Le serverMaster est le serveur vivant ayant le plus petit ID)
      *
      * @return
      */
@@ -212,12 +203,12 @@ public class Server {
     }
 
     /**
-     * Teste si le serveur suivant est le master
+     * Teste si le serveur suivant est le serverMaster
      *
-     * @return vrai si le serveur suivant est le master
+     * @return vrai si le serveur suivant est le serverMaster
      */
     private boolean closeToServerMaster() {
-        return neighborServerFrontMe[0].equals(master[0]);
+        return neighborServerFrontMe[0].equals(serverMaster[0]);
     }
 
     /**
@@ -290,15 +281,7 @@ public class Server {
      * @return
      */
     private String[] SearchServerById(int sId) {
-        /*String[] splitInfo = null;
-        for (int i = 0; i < nbServers; i++) {
-            splitInfo = listServer.get(i).split(":", 4);
-            if (Integer.valueOf(splitInfo[0]) == sId) {
-                return splitInfo;
-            }
-        }
-        return splitInfo;*/
-        return listServer.get(sId).split(":", 4);
+        return listServer.get(sId-1).split(":", 4);
     }
 
     /**
@@ -330,8 +313,6 @@ public class Server {
         socketFront = new Socket(neighborServerFrontMe[1], Integer.valueOf(neighborServerFrontMe[2]));
         ooutFront = new ObjectOutputStream(socketFront.getOutputStream());
         ooutFront.flush();
-        //oinFront = new ObjectInputStream(socketFront.getInputStream());
-        //BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
         if (resurrect == false) {
             sendMessageNextServer("S:" + neighborServerBehindMe[0] + " : " + neighborServerBehindMe[2] + " :" + "INIT");
@@ -386,7 +367,6 @@ public class Server {
                     oout = new ObjectOutputStream(userSocket.getOutputStream());
 
                     while (true) {
-                        //if (oin.read() != -1) {
                         msg = (String) oin.readObject();
                         SplitServerMessage = msg.split(":", 4);
                         String source = SplitServerMessage[0];
@@ -396,7 +376,7 @@ public class Server {
                             analyzeMessageSentByServer(msg, userSocket);
                         } else if (source.equals("C")) {
                             //L'expéditeur du message est un client
-                            if (sId == Integer.valueOf(master[0])) {
+                            if (sId == Integer.valueOf(serverMaster[0])) {
                                 analyzeMessageSentByUser_Master(msg, userSocket, oout);
                             } else {
                                 analyzeMessageSentByUser_NotMaster(msg, userSocket, oout);
@@ -405,13 +385,12 @@ public class Server {
                             //Mise a jour des infos du serveur ressuscité;
                             handleMsgUpdateServer(oin);
                         } else if (source.equals("GAME")) {
-                            //Mise a jour d'une partie transmis par le serveur master
+                            //Mise a jour d'une partie transmis par le serveur serverMaster
                             Game g = (Game) oin.readObject();
                             handleMsgGameServer(g);
                         } else {
                             System.out.println("Erreur : Message de type inconnu");
                         }
-                        //}
                     }
                 } catch (SocketException ex) {
                     if (socketBack.equals(userSocket)) {
@@ -422,7 +401,7 @@ public class Server {
                             sendMessageNextServer("S:" + neighborServerBehindMe[0] + ":" + sId + ":DEAD");
                             setServerDead(Integer.valueOf(neighborServerBehindMe[0]));
                             neighborServerBehindMe = whoIsMyNeighborBehindMe(sId);
-                            master = electMaster();
+                            serverMaster = electMaster();
                         } catch (IOException e) {
                             //e.printStackTrace();
                         }
@@ -439,7 +418,7 @@ public class Server {
                         }
                     }
                 }catch(Exception e){
-                    System.out.println();
+                    System.out.println("ICI probleme a regler");
                     e.printStackTrace();
                 }
             }
@@ -457,11 +436,9 @@ public class Server {
         User userDead = findUserFromTable(client, usersConnectedTable);
         if (userDead != null) {
             System.out.println("[Master : Client " + client + " connecté est tombé en panne]");
-            //changeUserStatus(client, Status.CONNECTED, Status.DISCONNECTED);
             usersConnectedTable.remove(userDead);
         } else if (userWaiting != null && userWaiting.getPseudo().equals(client)) {
             System.out.println("[Master : Client " + client + " en attente est tombé en panne]");
-            //changeUserStatus(client, Status.WAITING, Status.DISCONNECTED);
             userWaiting = null;
         } else {
             userDead = findUserFromTable(client, usersPlayingTable);
@@ -527,8 +504,8 @@ public class Server {
 
         try {
             System.out.println("=>Debut mise a jour du serveur par :  " + neighborServerBehindMe[0]);
-            master = (String[]) oin.readObject();
-            System.out.println("Le serveur master est : " + master[0]);
+            serverMaster = (String[]) oin.readObject();
+            System.out.println("Le serveur master est : " + serverMaster[0]);
             /* Hashtable contenant les utilisateurs connectés mais inactifs */
             usersConnectedTable.putAll((Hashtable<String, User>) oin.readObject());
             /* Utilisateur en attente d'un adversaire */
@@ -573,12 +550,12 @@ public class Server {
                     //mise a jour voisins
                     neighborServerFrontMe = SearchServerById(Integer.valueOf(serveur2));
                     neighborServerBehindMe = whoIsMyNeighborBehindMe(sId);
-                    master = electMaster();
+                    serverMaster = electMaster();
                     startConnectionBetweenServers();
                     System.out.println("Connexion nouvelle au serveur : " + neighborServerFrontMe[0]);
                 } else {
                     //le serveur mort n'etait pas son voisin
-                    master = electMaster();
+                    serverMaster = electMaster();
                     sendMessageNextServer(msg);
                 }
                 break;
@@ -606,7 +583,7 @@ public class Server {
 
     /**
      * Permet d'analyser de traiter le message recu et envoyé par un client
-     * dans le cas ou le destinataire est le master
+     * dans le cas ou le destinataire est le serverMaster
      *
      * @param msg
      * @param userSocket
@@ -659,7 +636,7 @@ public class Server {
             //L'utilisateur existe deja
 
             if(!usersSocket.containsKey(userSocket)){
-                //Si le serveur est un nouveau serveur master
+                //Si le serveur est un nouveau serveur serverMaster
                 //=>maj de la liste des sockets qu'il n'avait pas
                 usersSocket.put(userSocket, client);
             }
@@ -863,7 +840,7 @@ public class Server {
 
     /**
      * Permet d'analyser de traiter le message recu et envoyé par un client
-     * dans le cas ou le destinataire n'est pas le master
+     * dans le cas ou le destinataire n'est pas le serverMaster
      *
      * @param msg
      * @param userSocket
@@ -911,7 +888,7 @@ public class Server {
         String contenu = SplitServerMessage[3];
 
         if (contenu.contains("OK")) {
-            //Le serveur master a deja traité cette demande
+            //Le serveur serverMaster a deja traité cette demande
             System.out.println("[Client " + client + " vient de se connecter]");
             if (!closeToServerMaster()) {
                 sendMessageNextServer(msg);
@@ -929,7 +906,7 @@ public class Server {
         }else{
             System.out.println("[Client " + client + " tente de se connecter]");
             //Demande venant directement du client
-            sendMessage("REDIRECTION:::" + master[0], oout);
+            sendMessage("REDIRECTION:::" + serverMaster[0], oout);
         }
     }
 
@@ -990,7 +967,7 @@ public class Server {
                     //le deuxieme joueur est vivant et est en train de jouer
                     //le premier joueur qui a déjà joué vient de mourir
                 }
-                //System.out.println("Handle disconnect non master");
+                //System.out.println("Handle disconnect non serverMaster");
             }
         }
     }
@@ -1034,7 +1011,7 @@ public class Server {
             sendMessageNextServer("GAME:::");
             sendMessageNextServer(game);
         }
-        //System.out.println("réception message Game non master");
+        //System.out.println("réception message Game non serverMaster");
         //System.out.println("Clé de game="+game.getGameKey());
         //Mettre a jour la partie qui commence, en cours ou est fini
         Game myGame = gamesTable.get(game.getGameKey());
@@ -1077,7 +1054,7 @@ public class Server {
      * @param scan
      */
     public void handleCmdLine(Scanner scan){
-        System.out.println("Vous pouvez utiliter la command \"help\" pour consulter les commandes");
+        System.out.println("Vous pouvez utiliser la commande \"help\" pour consulter les commandes disponibles");
         while (true) {
             String cmd = scan.nextLine();
             switch(cmd) {
@@ -1086,7 +1063,7 @@ public class Server {
                     System.exit(0);
                     break;
                 case "master":
-                    System.out.println("Serveur master est: " + master[0]);
+                    System.out.println("Serveur master est: " + serverMaster[0]);
                     break;
                 case "neighborBehind":
                     System.out.println("Mon voisin derriere est " + neighborServerBehindMe[0] + " à l'adresse " + neighborServerBehindMe[1]
@@ -1109,7 +1086,7 @@ public class Server {
                     if(userWaiting != null) {
                         System.out.println("Pseudo: " + userWaiting.getPseudo() + " Status: " + userWaiting.getStatus());
                     }else{
-                        System.out.println("il n'y a pas de l'utilisateur en attente");
+                        System.out.println("il n'y a pas d'utilisateur en attente");
                     }
                     break;
                 case "game":
@@ -1121,10 +1098,11 @@ public class Server {
                     System.out.println("-neighborBehind     Afficher le serveur derriere ce serveur");
                     System.out.println("-neighborFront      Afficher le serveur devant ce serveur");
                     System.out.println("-usersConnected     Afficher les utilisateurs connectés");
+                    //TODO on ne les garde que s'ils sont tombés en panne s'ils avaient une partie en cours
                     System.out.println("-usersDisconnected  Afficher les utilisateurs déconnectés");
                     System.out.println("-usersPlaying       Afficher les utilisateurs qui sont en train de jouer");
                     System.out.println("-usersWaiting       Afficher l'utilisateur en attente");
-                    System.out.println("-game               Afficher les games");
+                    System.out.println("-game               Afficher les parties en cours");
                     break;
                 default:
                     System.out.println("La commande n'existe pas");
