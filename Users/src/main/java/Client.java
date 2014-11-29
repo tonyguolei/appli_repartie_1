@@ -224,10 +224,10 @@ public class Client {
                 //demande de deconnexion volontaire
                 sendMessage("C:" + this.pseudo + ":DISCONNECT:", oout);
                 quitVoluntarily = true;
-                break;
+                System.exit(0);
             }else if(msg.equals("kill")){
                 //simuler la panne du client
-                break;
+                System.exit(0);
             }else if (msg.equals("play")) {
                 //demande de lancement du jeu
                 sendMessage("C:" + this.pseudo + ":PLAY:", oout);
