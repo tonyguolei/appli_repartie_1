@@ -163,7 +163,7 @@ public class Server {
     private void readServerConfig() {
         int nbLine = 0;
         ConfigurationFileProperties fileS = new ConfigurationFileProperties
-                ("Servers/src/main/java/ConfigServer.properties");
+                ("/ConfigServer.properties");
         do {
             nbLine++;
             listServer.add(nbLine + ":" + fileS.getValue("addressServer" + nbLine) + ":"
@@ -1311,7 +1311,7 @@ public class Server {
         //tirer au sort une question
         int numeroquestion = 0;
         ConfigurationFileProperties questionQuiz =
-                new ConfigurationFileProperties("Servers/src/main/java/QuestionQuiz.properties");
+                new ConfigurationFileProperties("QuestionQuiz.properties");
         for (int i = 0; i < 3; i++) {
             Random r = new Random();
             numeroquestion = r.nextInt(Integer.parseInt(questionQuiz.getValue("nbrQuestions"))) + 1;

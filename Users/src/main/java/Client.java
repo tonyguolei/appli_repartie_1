@@ -73,7 +73,7 @@ public class Client {
     public static void saveListServer() {
         int nbLine = 0;
         ConfigurationFileProperties fileS = new ConfigurationFileProperties
-                ("Users/src/main/java/ConfigServer.properties");
+                ("/ConfigServer.properties");
         do {
             nbLine++;
             mapServer.put(nbLine, fileS.getValue("addressServer" + nbLine) + ":"
@@ -184,7 +184,7 @@ public class Client {
                     socket.close();
                     System.out.println("Le serveur " + sId + " est tombé en panne");
                     System.out.println("Merci de patienter pendant la reconnexion au serveur " + (sId + 1)%4 + "...");
-                    sleep(10000);
+                    sleep(5000);
 
                     //mettre a jour server master
                     sId = (sId + 1)%4;

@@ -2,10 +2,7 @@
  * Created by tonyguolei on 10/30/2014.
  */
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.Properties;
 
 /**
@@ -13,8 +10,8 @@ import java.util.Properties;
  */
 public class ConfigurationFileProperties {
     private Properties propertie;
-    private FileInputStream inputFile;
-
+    //private FileInputStream inputFile;
+    private InputStream inputFile;
     /**
      * initialise ConfigurationFileProperties
      */
@@ -30,7 +27,7 @@ public class ConfigurationFileProperties {
     public ConfigurationFileProperties(String filePath) {
         propertie = new Properties();
         try {
-            inputFile = new FileInputStream(filePath);
+            inputFile = getClass().getResourceAsStream(filePath);
             propertie.load(inputFile);
             inputFile.close();
         } catch (FileNotFoundException ex) {
