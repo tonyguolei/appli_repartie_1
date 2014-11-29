@@ -221,11 +221,14 @@ public class Client {
             Scanner reader = new Scanner(System.in);
             String msg = reader.nextLine();
             if (msg.equals("quit")) {
-                //demande de deconnexion
+                //demande de deconnexion volontaire
                 sendMessage("C:" + this.pseudo + ":DISCONNECT:", oout);
                 quitVoluntarily = true;
                 break;
-            } else if (msg.equals("play")) {
+            }else if(msg.equals("kill")){
+                //simuler la panne du client
+                break;
+            }else if (msg.equals("play")) {
                 //demande de lancement du jeu
                 sendMessage("C:" + this.pseudo + ":PLAY:", oout);
             } else {
