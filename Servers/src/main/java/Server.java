@@ -18,7 +18,7 @@ public class Server {
     private ServerSocket serverSocket;
     private Socket socketFront;
     private Socket socketBack;
-    private int nbServers = 4;
+    private int nbServers;
     /* serverMaster[0] = idServeur, [1] = adresseServeur, [2] = portServeur, [3] = etatServeur */
     private static String[] serverMaster;
     /* neighborServerFrontMe[0] = idServeur, [1] = adresseServeur, [2] = portServeur, [3] = etatServeur */
@@ -170,6 +170,7 @@ public class Server {
                     + fileS.getValue("portServer" + nbLine) + ":1");
         }
         while (fileS.getValue("addressServer" + (nbLine + 1)) != "");
+        nbServers = nbLine;
     }
 
     /**
@@ -799,7 +800,8 @@ public class Server {
      * @param oout
      * @throws IOException
      */
-    private void handleMsgPlayMaster(String msg, ObjectOutputStream oout) throws IOException {
+    private void
+    handleMsgPlayMaster(String msg, ObjectOutputStream oout) throws IOException {
         String[] SplitServerMessage = msg.split(":", 4);
         String client = SplitServerMessage[1];
 
