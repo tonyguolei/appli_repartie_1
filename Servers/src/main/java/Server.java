@@ -432,7 +432,7 @@ public class Server {
 
         new Thread(new Runnable() {
             public void run() {
-                ObjectInputStream oin;
+                ObjectInputStream oin = null;
                 ObjectOutputStream oout;
                 String[] SplitServerMessage;
                 String msg = "";
@@ -493,10 +493,11 @@ public class Server {
                                 sendMessageNextServer("C:" + lastPseudo + ":DISCONNECT:");
                                 handleUserDead(lastPseudo, userSocket);
                             } catch (IOException e) {
-                                e.printStackTrace();
+                                //TODO si je ne commente pas, ca affiche exception sur Window, mais pas ubuntu quand un client est
+                                //e.printStackTrace();
                             }
                         }
-                        ex.printStackTrace();
+                        //ex.printStackTrace();
                     }
                 }catch(EOFException eo){
                     System.out.println("PROBLEM AGAIN ");
