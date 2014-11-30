@@ -73,7 +73,7 @@ public class Client {
     public static void saveListServer() {
         int nbLine = 0;
         ConfigurationFileProperties fileS = new ConfigurationFileProperties
-                ("Users/src/main/java/ConfigServer.properties");
+                ("/ConfigServer.properties");
         do {
             nbLine++;
             mapServer.put(nbLine, fileS.getValue("addressServer" + nbLine) + ":"
@@ -184,7 +184,7 @@ public class Client {
                     socket.close();
                     System.out.println("Le serveur " + sId + " est tombé en panne");
                     System.out.println("Merci de patienter pendant la reconnexion au serveur " + (sId + 1)%4 + "...");
-                    sleep(10000);
+                    sleep(5000);
 
                     //mettre a jour server master
                     sId = (sId + 1)%4;
@@ -221,11 +221,14 @@ public class Client {
             Scanner reader = new Scanner(System.in);
             String msg = reader.nextLine();
             if (msg.equals("quit")) {
-                //demande de deconnexion
+                //demande de deconnexion volontaire
                 sendMessage("C:" + this.pseudo + ":DISCONNECT:", oout);
                 quitVoluntarily = true;
-                break;
-            } else if (msg.equals("play")) {
+                System.exit(0);
+            }else if(msg.equals("kill")){
+                //simuler la panne du client
+                System.exit(0);
+            }else if (msg.equals("play")) {
                 //demande de lancement du jeu
                 sendMessage("C:" + this.pseudo + ":PLAY:", oout);
             } else {

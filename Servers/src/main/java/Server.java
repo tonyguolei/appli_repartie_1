@@ -163,7 +163,7 @@ public class Server {
     private void readServerConfig() {
         int nbLine = 0;
         ConfigurationFileProperties fileS = new ConfigurationFileProperties
-                ("Servers/src/main/java/ConfigServer.properties");
+                ("/ConfigServer.properties");
         do {
             nbLine++;
             listServer.add(nbLine + ":" + fileS.getValue("addressServer" + nbLine) + ":"
@@ -433,7 +433,7 @@ public class Server {
 
         new Thread(new Runnable() {
             public void run() {
-                ObjectInputStream oin;
+                ObjectInputStream oin = null;
                 ObjectOutputStream oout;
                 String[] SplitServerMessage;
                 String msg = "";
@@ -494,10 +494,11 @@ public class Server {
                                 sendMessageNextServer("C:" + lastPseudo + ":DISCONNECT:");
                                 handleUserDead(lastPseudo, userSocket);
                             } catch (IOException e) {
-                                e.printStackTrace();
+                                //TODO si je ne commente pas, ca affiche exception sur Window, mais pas ubuntu quand un client est
+                                //e.printStackTrace();
                             }
                         }
-                        ex.printStackTrace();
+                        //ex.printStackTrace();
                     }
                 }catch(EOFException eo){
                     System.out.println("PROBLEM AGAIN ");
@@ -1313,7 +1314,7 @@ public class Server {
         //tirer au sort une question
         int numeroquestion = 0;
         ConfigurationFileProperties questionQuiz =
-                new ConfigurationFileProperties("Servers/src/main/java/QuestionQuiz.properties");
+                new ConfigurationFileProperties("QuestionQuiz.properties");
         for (int i = 0; i < 3; i++) {
             Random r = new Random();
             numeroquestion = r.nextInt(Integer.parseInt(questionQuiz.getValue("nbrQuestions"))) + 1;
@@ -1394,7 +1395,7 @@ public class Server {
                     //TODO déconnecté => on ne les garde que s'ils sont tombés en panne s'ils avaient une partie en cours
                     System.out.println("-usersDisconnected  Afficher les utilisateurs déconnectés");
                     System.out.println("-usersPlaying       Afficher les utilisateurs qui sont en train de jouer");
-                    System.out.println("-usersWaiting       Afficher l'utilisateur en attente");
+                    System.out.println("-userWaiting       Afficher l'utilisateur en attente");
                     System.out.println("-game               Afficher les parties en cours");
                     break;
                 default:
