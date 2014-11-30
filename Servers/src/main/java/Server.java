@@ -1393,7 +1393,7 @@ public class Server {
                     //TODO déconnecté => on ne les garde que s'ils sont tombés en panne s'ils avaient une partie en cours
                     System.out.println("-usersDisconnected  Afficher les utilisateurs déconnectés");
                     System.out.println("-usersPlaying       Afficher les utilisateurs qui sont en train de jouer");
-                    System.out.println("-usersWaiting       Afficher l'utilisateur en attente");
+                    System.out.println("-userWaiting       Afficher l'utilisateur en attente");
                     System.out.println("-game               Afficher les parties en cours");
                     break;
                 default:
