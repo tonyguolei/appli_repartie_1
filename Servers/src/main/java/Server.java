@@ -293,8 +293,8 @@ public class Server {
                     neighborServerFrontMe = whoIsMyNeighbor(sId);
                     neighborServerBehindMe = whoIsMyNeighborBehindMe(sId);
                     if (init && !resurrect) {
-                            sleep(30000 - 5000 * sId);
-                            System.out.println("=> Attente démarrage du serveur : (Id=" + neighborServerFrontMe[0] + ")");
+                        sleep(30000 - 5000 * sId);
+                        System.out.println("=> Attente démarrage du serveur : (Id=" + neighborServerFrontMe[0] + ")");
                     }
                     ServerNeighbor();
                 } catch (Exception e) {
@@ -583,7 +583,7 @@ public class Server {
                     //supprimer la partie
                     removeGameFromGameTable(g.getGameKey());
                     //envoyer le menu a l'utilisater encore vivant
-                    sendMessage(getMenuUser(), u1.getSocketOout());
+                    //sendMessage(getMenuUser(), u1.getSocketOout());
                 } else if (uMain.equals(u2) && u1.equals(userDead)) {
                     //le deuxieme joueur est vivant et est en train de jouer
                     //le premier joueur qui a déjà joué vient de mourir
@@ -760,9 +760,8 @@ public class Server {
             addUserTable(user, usersConnectedTable);
             //ajouter dans la liste des utilisateurs/sockets
             usersSocket.put(userSocket, client);
-            //Envoyer le menu client
-            sendMessage("============================\n|   Bienvenue " + client + "           |\n"
-                    + getMenuUser(), oout);
+            //afficher le message pour signaler de cliquer
+            sendMessage("Pour jouer, cliquez sur \nle boutton jouer\n", oout);
         }
     }
 
@@ -868,6 +867,8 @@ public class Server {
             sendMessage(game, game.getUser2().getSocketOout());
         } else {
             //si le deuxieme client a fini sa partie, le jeu est terminé
+            sendMessage("SCORE", game.getUser1().getSocketOout());
+            sendMessage("SCORE", game.getUser2().getSocketOout());
             if (game.getScoreUser1() > game.getScoreUser2()) {
                 if (game.getUser1().getStatus() != Status.DISCONNECTED) {
                     sendMessage("Gagné ! Vous avez battu votre adversaire !!!", game.getUser1().getSocketOout());
@@ -903,14 +904,14 @@ public class Server {
                 changeUserStatus(game.getUser2().getPseudo(), Status.PLAYING, Status.CONNECTED);
                 usersDisconnectedTable.remove(game.getUser1().getPseudo());
                 //envoyer le menu au client qui reste
-                sendMessage(getMenuUser(), game.getUser2().getSocketOout());
+                //sendMessage(getMenuUser(), game.getUser2().getSocketOout());
             } else {
                 //les deux joueurs n'ont pas quitté la partie
                 changeUserStatus(game.getUser1().getPseudo(), Status.PLAYING, Status.CONNECTED);
                 changeUserStatus(game.getUser2().getPseudo(), Status.PLAYING, Status.CONNECTED);
                 //envoyer le menu aux clients
-                sendMessage(getMenuUser(), game.getUser1().getSocketOout());
-                sendMessage(getMenuUser(), game.getUser2().getSocketOout());
+                //sendMessage(getMenuUser(), game.getUser1().getSocketOout());
+                //sendMessage(getMenuUser(), game.getUser2().getSocketOout());
             }
         }
 
@@ -1323,20 +1324,20 @@ public class Server {
         }
     }
 
-    /**
+/*    *
      * Renvoie le menu disponible pour l'utilisateur
      *
      * @return chaîne de caractères
-     */
+
     private String getMenuUser() {
-        String res;
+        String res = "getMenu";
         res = "============================" + "\n";
         res += "| Options:                 |" + "\n";
         res += "|        play              |" + "\n";
         res += "|        quit              |" + "\n";
         res += "============================";
         return res;
-    }
+    }*/
 
     /************************************************GESTION DE L'AFFICHAGE***************************************/
 

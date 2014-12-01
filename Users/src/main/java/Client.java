@@ -13,26 +13,29 @@ public class Client {
     /**
      * **********UTILISATEUR ET PARTIES**************
      */
-    private String pseudo;
-    private Game game = null;
-    private int numeroQuestion = 0;
-    private int score = 0;
-    private boolean quitVoluntarily = false;
+    public String pseudo;
+    public Game game = null;
+    public int numeroQuestion = 0;
+    public int score = 0;
+    public boolean quitVoluntarily = false;
+
+
+    public static UserInterface gui;
 
     /**
      * **********GESTION COMMUNICATION SERVEUR**************
      */
-    private int sId;
-    private String addressServer;
-    private int portServer;
-    private Socket socket;
-    private ObjectOutputStream oout;
-    private ObjectInputStream oin;
+    public int sId;
+    public String addressServer;
+    public int portServer;
+    public Socket socket;
+    public ObjectOutputStream oout;
+    public ObjectInputStream oin;
 
     /**
      * **********GESTION AUTRES SERVEURS****
      */
-    private static HashMap<Integer, String> mapServer = new HashMap<Integer, String>();
+    public static HashMap<Integer, String> mapServer = new HashMap<Integer, String>();
     static {
         //Initialisation liste serveurs
         saveListServer();
@@ -52,12 +55,16 @@ public class Client {
     public String createPseudo() {
         String pseudo = "";
         boolean checkScan = false;
-        Scanner reader = new Scanner(System.in);
+        // Scanner reader = new Scanner(System.in);
         System.out.println("Pour se connecter, entrez votre pseudo: ");
 
         do {
-            pseudo = reader.nextLine();
-            if (pseudo == "") {
+            // pseudo = reader.nextLine();
+            // gui
+            //  pseudo = gui.getUserName();
+            // System.out.println(pseudo);
+
+            if (getPseudo() == "") {
                 System.out.println("Saisie incorrecte");
             } else {
                 checkScan = true;
@@ -100,7 +107,7 @@ public class Client {
      * @param msg
      * @throws IOException
      */
-    private void sendMessage(Object msg, ObjectOutputStream outC) throws IOException {
+    public void sendMessage(Object msg, ObjectOutputStream outC) throws IOException {
         //Envoyer a quelqu'un un message
         outC.writeObject(msg);
         outC.flush();
@@ -128,7 +135,8 @@ public class Client {
                 }
             }).start();
             //Traiter les messages envoye au serveur
-            handleMsgSendToServer();
+            //gui
+            //handleMsgSendToServer();
 
         } catch (IOException ex) {
             System.out.println("Echec de connecter serveur " + sId);
@@ -143,7 +151,7 @@ public class Client {
      * Traiter les messages recus
      *
      */
-    private void handleMsgFromServer() {
+    public void handleMsgFromServer() {
         String ackServer;
         int numeroQuestion = 0;
         try {
@@ -169,8 +177,12 @@ public class Client {
 
                     //Envoyer le pseudo pour connecter le serveur
                     sendMessage("C:" + this.pseudo + ":CONNECT:", oout);
-                }else {
+                }else if(typeMessage.equals("SCORE")){
+                    gui.setEnableBtnJeu();
+                }
+                else{
                     System.out.println(ackServer);
+                    gui.setQuestion(ackServer);
                 }
             }
         } catch (IOException e) {
@@ -216,44 +228,45 @@ public class Client {
      *
      * @throws IOException
      */
-    private void handleMsgSendToServer() throws IOException {
-        while (true) {
-            Scanner reader = new Scanner(System.in);
-            String msg = reader.nextLine();
-            if (msg.equals("quit")) {
-                //demande de deconnexion volontaire
-                sendMessage("C:" + this.pseudo + ":DISCONNECT:", oout);
-                quitVoluntarily = true;
-                System.exit(0);
-            }else if(msg.equals("kill")){
-                //simuler la panne du client
-                System.exit(0);
-            }else if (msg.equals("play")) {
-                //demande de lancement du jeu
-                sendMessage("C:" + this.pseudo + ":PLAY:", oout);
-            } else {
-                //si le jeu existe, jouer le jeu
-                if (game != null) {
-                    if (numeroQuestion < 3) {
-                        checkResponse(game, numeroQuestion, msg);
-                        numeroQuestion++;
-                        if (numeroQuestion != 3) {
-                            displayQuestion(game, numeroQuestion);
-                        }
+    public void handleMsgSendToServer(String msg) throws IOException {
+        // while (true) {
+        //Scanner reader = new Scanner(System.in);
+        //String msg = reader.nextLine();
+        if (msg.equals("quit")) {
+            //demande de deconnexion volontaire
+            sendMessage("C:" + this.pseudo + ":DISCONNECT:", oout);
+            quitVoluntarily = true;
+            System.exit(0);
+        }else if(msg.equals("kill")){
+            //simuler la panne du client
+            System.exit(0);
+        }else if (msg.equals("play")) {
+            //demande de lancement du jeu
+            sendMessage("C:" + this.pseudo + ":PLAY:", oout);
+        } else {
+            //si le jeu existe, jouer le jeu
+            if (game != null) {
+                if (numeroQuestion < 3) {
+                    checkResponse(game, numeroQuestion, msg);
+                    numeroQuestion++;
+                    if (numeroQuestion != 3) {
+                        displayQuestion(game, numeroQuestion);
                     }
-                    if (numeroQuestion == 3) {
-                        System.out.println("Vous avez obtenu un score = " + score);
-                        sendMessage("C:" + this.pseudo + ":RESULT:" + Integer.toString(score), oout);
-                        //reinitialiser les parametres pour le jeu
-                        game = null;
-                        numeroQuestion = 0;
-                        score = 0;
-                    }
-                } else {
-                    //sinon, on fait rien quand le client tape sur clavier sauf "play" et "quit"
                 }
+                if (numeroQuestion == 3) {
+                    System.out.println("Vous avez obtenu un score = " + score);
+
+                    sendMessage("C:" + this.pseudo + ":RESULT:" + Integer.toString(score), oout);
+                    //reinitialiser les parametres pour le jeu
+                    game = null;
+                    numeroQuestion = 0;
+                    score = 0;
+                }
+            } else {
+                //sinon, on fait rien quand le client tape sur clavier sauf "play" et "quit"
             }
         }
+        //}
     }
 
     /**
@@ -262,8 +275,11 @@ public class Client {
      * @param game
      * @param numeroQuestion
      */
-    private void displayQuestion(Game game, int numeroQuestion) {
+    public void displayQuestion(Game game, int numeroQuestion) {
         System.out.println(game.getQuestionsUserPlaying().get(numeroQuestion).getContenuQuestion());
+        gui.setQuesChoice(game, numeroQuestion);
+        gui.setBtnQuestionEnable();
+
     }
 
     /**
@@ -273,12 +289,19 @@ public class Client {
      * @param numeroQuestion
      * @param response
      */
-    private void checkResponse(Game game, int numeroQuestion, String response) {
+    public void checkResponse(Game game, int numeroQuestion, String response) {
         if (response.equals(game.getQuestionsUserPlaying().get(numeroQuestion).getResponse())) {
             System.out.println("=>Réponse juste +1");
             score++;
+
+            //gui
+            gui.setResp(true,numeroQuestion+1);
+            System.out.println(response);
+
         } else {
             System.out.println("=>Réponse fausse 0");
+            System.out.println(response);
+            gui.setResp(false,numeroQuestion+1);
         }
     }
 
@@ -318,10 +341,21 @@ public class Client {
         this.socket = socket;
     }
 
+    public Game getGame() {
+        return game;
+    }
+
+    public void setGame(Game game) {
+        this.game = game;
+    }
+
     public static void main(String[] args) throws Exception {
+
+
         Client user = new Client();
-        user.setPseudo(user.createPseudo());
-        user.configureServer(1);
-        user.connectServer(user.addressServer, user.portServer);
+        gui = new UserInterface(user);
+        //user.setPseudo(user.createPseudo());
+        //user.configureServer(1);
+        //user.connectServer(user.addressServer, user.portServer);
     }
 }
