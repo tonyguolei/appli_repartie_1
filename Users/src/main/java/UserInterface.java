@@ -10,30 +10,24 @@ import java.awt.Font;
 
 public class UserInterface extends JFrame {
 
-    private JProgressBar bar;
     JPanel panel;
     Thread t;
+    JEditorPane question;
+    private JProgressBar bar;
     private JButton quesChoiceOne;
     private JButton quesChoiceTwo;
     private JButton quesChoiceThree;
     private JButton quesChoiceFour;
-
-    private  JButton respOne;
+    private JButton respOne;
     private JButton respTwo;
     private JButton respThree;
-
     private JButton btnSeConnecter;
     private JButton btnSeDeconnecter;
     private JButton btnJouer;
-
     private JLabel users;
-
     private String userName ;
     private String play;
-
     private Client client ;
-
-
 
     public String getPlay() {
         return play;
@@ -50,10 +44,6 @@ public class UserInterface extends JFrame {
     public void setUserName(String userName) {
         this.userName = userName;
     }
-
-    JEditorPane question;
-
-
 
     public void setQuesChoice(Game game, int numeroQuestion) {
 
