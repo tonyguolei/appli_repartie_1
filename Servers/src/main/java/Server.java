@@ -293,8 +293,8 @@ public class Server {
                     neighborServerFrontMe = whoIsMyNeighbor(sId);
                     neighborServerBehindMe = whoIsMyNeighborBehindMe(sId);
                     if (init && !resurrect) {
-                        sleep(30000 - 5000 * sId);
                         System.out.println("=> Attente démarrage du serveur : (Id=" + neighborServerFrontMe[0] + ")");
+                        sleep(30000 - 5000 * sId);
                     }
                     ServerNeighbor();
                 } catch (Exception e) {
@@ -639,6 +639,9 @@ public class Server {
                 System.out.println("Serveur vivant derriere moi : " +
                         "(Id=" + neighborServerBehindMe[0] + "|Adresse=" + neighborServerBehindMe[1]+
                         "|Port=" + neighborServerBehindMe[2]+")");
+                if(sId == Integer.parseInt(serverMaster[0])){
+                    System.out.println("=> Initialisation des serveurs OK");
+                }
                 socketBack = userSocket;
                 break;
             case "DEAD":
