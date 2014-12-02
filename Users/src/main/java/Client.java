@@ -160,6 +160,9 @@ public class Client {
                 String typeMessage = SplitServerMessage[0];
                 //si le message est "OBJETGAME", le message suivant contient l'objet Game
                 if (typeMessage.equals("OBJETGAME")) {
+
+                    gui.confirmPlayGame();
+
                     game = (Game) oin.readObject();
                     displayQuestion(game, numeroQuestion);
                 } else if(typeMessage.equals("REDIRECTION")) {
@@ -177,8 +180,13 @@ public class Client {
 
                     //Envoyer le pseudo pour connecter le serveur
                     sendMessage("C:" + this.pseudo + ":CONNECT:", oout);
+
                 }else if(typeMessage.equals("SCORE")){
                     gui.setEnableBtnJeu();
+                }else if (typeMessage.equals("RECONNEXION_EFFECTUEE_CONTINUER")){
+                    // on active les boutons
+                    gui.setBtnQuestionEnable();
+                    gui.setVisibilityErrorReseau(false);
                 }
                 else{
                     System.out.println(ackServer);
@@ -196,6 +204,10 @@ public class Client {
                     socket.close();
                     System.out.println("Le serveur " + sId + " est tombé en panne");
                     System.out.println("Merci de patienter pendant la reconnexion au serveur " + (sId + 1)%4 + "...");
+
+                    // on desactive les boutons
+                    gui.setBtnQuestionDisable();
+                    gui.setVisibilityErrorReseau(true);
                     sleep(5000);
 
                     //mettre a jour server master
@@ -276,6 +288,8 @@ public class Client {
      * @param numeroQuestion
      */
     public void displayQuestion(Game game, int numeroQuestion) {
+
+
         System.out.println(game.getQuestionsUserPlaying().get(numeroQuestion).getContenuQuestion());
         gui.setQuesChoice(game, numeroQuestion);
         gui.setBtnQuestionEnable();
