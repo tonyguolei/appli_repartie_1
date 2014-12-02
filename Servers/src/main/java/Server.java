@@ -608,8 +608,9 @@ public class Server {
             }
             user.setSocket(userSocket);
             user.setSocketOout(oout);
-            sendMessage("vous etes déja connecté au serveur " + sId, oout);
-            sendMessage("vous pouvez continuer", oout);
+            /*sendMessage("vous etes déja connecté au serveur " + sId, oout);
+            sendMessage("vous pouvez continuer", oout);*/
+            sendMessage("RECONNEXION_EFFECTUEE_CONTINUER", oout);
             sendMessageNextServer(msg + "LAST");
         } else {
             //L'utilisateur n'existe pas
