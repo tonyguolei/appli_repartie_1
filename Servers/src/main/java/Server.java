@@ -445,7 +445,6 @@ public class Server {
      * @throws IOException
      */
     private void handleUserDead(String client, final Socket userSocket) throws IOException {
-        System.out.println("Handle USER dead");
         //Mettre a jour l'etat de l'utilisateur
         User userDead = findUserFromTable(client, usersConnectedTable);
         if (userDead != null) {
@@ -455,13 +454,14 @@ public class Server {
             System.out.println("[Master : Client " + client + " en attente est tombé en panne]");
             userWaiting = null;
         } else {
-            userDead = findUserFromTable(client, usersPlayingTable);
-            if (userDead != null){
+            //userDead = findUserFromTable(client, usersPlayingTable);
+            userDead = findUserByPseudo(client);
+
+            if (userDead != null && userDead.getStatus() == Status.PLAYING){
+                System.out.println(userDead.getStatus().toString());
                 changeUserStatus(client,Status.PLAYING,Status.DISCONNECTED);
                 System.out.println("[Master : Client " + client + " en train de jouer est tombé en panne]");
                 endGameMaster(userDead);
-            }else{
-                System.out.println("ICI handleUserDEad");
             }
         }
         //Mettre a jour la liste utilisateur/socket
@@ -651,8 +651,10 @@ public class Server {
             System.out.println("[Master : Client " + client + " en attente s'est déconnecté]");
             userWaiting = null;
         } else {
-            User user2 = findUserFromTable(client,usersPlayingTable);
-            if(user2 != null){
+            //User user2 = findUserFromTable(client,usersPlayingTable);
+            User user2 = findUserByPseudo(client);
+
+            if(user2 != null && user2.getStatus() == Status.PLAYING){
                 changeUserStatus(client,Status.PLAYING,Status.DISCONNECTED);
                 System.out.println("[Master : Client " + client + " en train de jouer s'est déconnecté]");
                 endGameMaster(user2);
@@ -1060,19 +1062,19 @@ public class Server {
 
     /**
      * Mise a jour de la partie et ses joueurs (master)
-     * @param user2 utilisateur qui a fini le jeu
+     * @param userDead utilisateur qui a fini le jeu
      * @throws IOException
      */
-    private void endGameMaster(User user2) throws IOException {
+    private void endGameMaster(User userDead) throws IOException {
 
         //Chercher s'il avait des parties en cours
-        Game g = gamesTable.get(user2.getGameKey());
+        Game g = gamesTable.get(userDead.getGameKey());
         if (g != null) {
             User u1 = g.getUser1();
             User u2 = g.getUser2();
             User uMain = g.getUserPlaying();
 
-            if (uMain.equals(u1) && uMain.equals(user2)) {
+            if (uMain.equals(u1) && uMain.equals(userDead)) {
                 //le client déconnecté etait en train de jouer en 1er
                 g.setScoreUser1(0);
                 g.setScoreUserPlaying(0);
@@ -1083,8 +1085,8 @@ public class Server {
                 sendMessage("C'est parti !!!", u2.getSocketOout());
                 sendMessage("OBJETGAME", u2.getSocketOout());
                 sendMessage(g, u2.getSocketOout());
-            } else if (uMain.equals(u2) && uMain.equals(user2)) {
-                //le client déconnecté etait en train de jouer en 2eme
+            } else if (uMain.equals(u2) && uMain.equals(userDead)) {
+                //le client déconnecté etait en train de jouer en 2eme => fin de la partie
                 System.out.println("[Master : La partie entre " + g.getUser1().getPseudo()
                         + " et " + g.getUser2().getPseudo() + " est terminée]");
                 g.setScoreUser2(0);
@@ -1092,10 +1094,12 @@ public class Server {
                 g.setUserPlaying(null);
 
                 //comparer les scores et envoyer le résultat
-                if (g.getScoreUser1() > 0) {
-                    sendMessage("Gagné ! Vous avez battu votre adversaire !!!", u1.getSocketOout());
-                } else {
-                    sendMessage("Egalite = Match nul !!!", u1.getSocketOout());
+                if(u1.getStatus() != Status.DISCONNECTED){
+                    if (g.getScoreUser1() > 0) {
+                        sendMessage("Gagné ! Vous avez battu votre adversaire !!!", u1.getSocketOout());
+                    } else {
+                        sendMessage("Egalite = Match nul !!!", u1.getSocketOout());
+                    }
                 }
 
                 //Mettre a jour le statut de l'utilisateur
@@ -1113,10 +1117,9 @@ public class Server {
                     //sendMessage(getMenuUser(), u1.getSocketOout());
                 }
                 usersDisconnectedTable.remove(u2.getPseudo());
-            } else if (uMain.equals(u2) && u1.equals(user2)) {
+            } else if (uMain.equals(u2) && u1.equals(userDead)) {
                 //le deuxieme joueur est vivant et est en train de jouer
                 //le premier joueur qui a déjà joué vient de se déconnecter
-                System.out.println("ICI dans GameServer");
             }
         }
     }
