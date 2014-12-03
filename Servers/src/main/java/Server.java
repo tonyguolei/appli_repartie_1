@@ -1,3 +1,5 @@
+import com.sun.xml.internal.fastinfoset.sax.SystemIdResolver;
+
 import java.net.*;
 import java.util.*;
 import java.io.*;
@@ -456,6 +458,8 @@ public class Server {
                 changeUserStatus(client,Status.PLAYING,Status.DISCONNECTED);
                 System.out.println("[Master : Client " + client + " en train de jouer est tombé en panne]");
                 endGameMaster(userDead);
+            }else{
+                System.out.println("ICI handleUserDEad");
             }
         }
         //Mettre a jour la liste utilisateur/socket
@@ -650,6 +654,8 @@ public class Server {
                 changeUserStatus(client,Status.PLAYING,Status.DISCONNECTED);
                 System.out.println("[Master : Client " + client + " en train de jouer s'est déconnecté]");
                 endGameMaster(user2);
+            }else{
+                System.out.println("Ici handle Msg Disconnect MAster");
             }
         }
         //Mettre a jour la liste utilisateur/socket
@@ -1102,6 +1108,7 @@ public class Server {
             } else if (uMain.equals(u2) && u1.equals(user2)) {
                 //le deuxieme joueur est vivant et est en train de jouer
                 //le premier joueur qui a déjà joué vient de se déconnecter
+                System.out.println("ICI dans GameServer");
             }
         }
     }
