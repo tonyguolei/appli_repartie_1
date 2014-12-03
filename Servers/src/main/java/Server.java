@@ -382,8 +382,15 @@ public class Server {
                                 handleMsgUpdateServer(oin);
                             } else if (source.equals("GAME")) {
                                 //Mise a jour d'une partie transmis par le serveur master
-                                Game g = (Game) oin.readObject();
-                                handleMsgGameServer(g);
+                                Object o = null;
+                                try{
+                                    o = oin.readObject();
+                                    Game g = (Game) o;
+                                    handleMsgGameServer(g);
+                                }catch(Exception e){
+                                    e.printStackTrace();
+                                    System.out.println(o.toString());
+                                }
                             } else {
                                 System.out.println("Erreur : Message de type inconnu");
                             }
