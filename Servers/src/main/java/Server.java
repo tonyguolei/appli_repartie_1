@@ -366,7 +366,7 @@ public class Server {
                             msg = (String) oin.readObject();
                             SplitServerMessage = msg.split(":", 4);
                             String source = SplitServerMessage[0];
-
+                            //System.out.println("Msg recu = "+msg);
                             if (source.equals("S")) {
                                 //L'expéditeur du message est un serveur
                                 analyzeMessageSentByServer(msg, userSocket);
@@ -392,6 +392,7 @@ public class Server {
                         }
                     }
                 } catch (SocketException ex) {
+                    //System.out.println("Socket Exception");
                     if (socketBack.equals(userSocket)) {
                         //panne du serveur de derriere
                         try {
@@ -417,6 +418,7 @@ public class Server {
                         }
                     }
                 }catch(EOFException eo){
+                    //System.out.println("EOF exception");
                     String lastPseudo = usersSocket.get(userSocket);
                     if (lastPseudo != null) {
                         try {
@@ -443,7 +445,7 @@ public class Server {
      * @throws IOException
      */
     private void handleUserDead(String client, final Socket userSocket) throws IOException {
-
+        System.out.println("Handle USER dead");
         //Mettre a jour l'etat de l'utilisateur
         User userDead = findUserFromTable(client, usersConnectedTable);
         if (userDead != null) {
@@ -742,7 +744,7 @@ public class Server {
                 }
                 System.out.println("[Master : La partie entre " + game.getUser1().getPseudo() +
                         " et " + game.getUser2().getPseudo() + " est terminée]");
-
+                //TODO Envoyer message score à client 1
                 game.getUser1().setGameKey("");
                 game.getUser2().setGameKey("");
                 game.setUserPlaying(null);
@@ -753,8 +755,11 @@ public class Server {
             }
         } else {
             //si le deuxieme client a fini sa partie, le jeu est terminé
-            sendMessage("SCORE", game.getUser1().getSocketOout());
+            if (game.getUser1().getStatus() != Status.DISCONNECTED) {
+                sendMessage("SCORE", game.getUser1().getSocketOout());
+            }
             sendMessage("SCORE", game.getUser2().getSocketOout());
+
             if (game.getScoreUser1() > game.getScoreUser2()) {
                 if (game.getUser1().getStatus() != Status.DISCONNECTED) {
                     sendMessage("Gagné ! Vous avez battu votre adversaire !!!", game.getUser1().getSocketOout());
@@ -791,13 +796,16 @@ public class Server {
                 usersDisconnectedTable.remove(game.getUser1().getPseudo());
                 //envoyer le menu au client qui reste
                 //sendMessage(getMenuUser(), game.getUser2().getSocketOout());
-            } else {
-                //les deux joueurs n'ont pas quitté la partie
-                changeUserStatus(game.getUser1().getPseudo(), Status.PLAYING, Status.CONNECTED);
-                changeUserStatus(game.getUser2().getPseudo(), Status.PLAYING, Status.CONNECTED);
-                //envoyer le menu aux clients
-                //sendMessage(getMenuUser(), game.getUser1().getSocketOout());
-                //sendMessage(getMenuUser(), game.getUser2().getSocketOout());
+            } else if(game.getUser2().getStatus() == Status.DISCONNECTED) {
+                //le joueur2 est tombé en panne
+                //TODO joueur2 tombé en panne
+            }else{
+                    //les deux joueurs n'ont pas quitté la partie
+                    changeUserStatus(game.getUser1().getPseudo(), Status.PLAYING, Status.CONNECTED);
+                    changeUserStatus(game.getUser2().getPseudo(), Status.PLAYING, Status.CONNECTED);
+                    //envoyer le menu aux clients
+                    //sendMessage(getMenuUser(), game.getUser1().getSocketOout());
+                    //sendMessage(getMenuUser(), game.getUser2().getSocketOout());
             }
         }
 
