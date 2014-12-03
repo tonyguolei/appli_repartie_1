@@ -369,7 +369,7 @@ public class Server {
                             msg = (String) oin.readObject();
                             SplitServerMessage = msg.split(":", 4);
                             String source = SplitServerMessage[0];
-                            //System.out.println("Msg recu = "+msg);
+
                             if (source.equals("S")) {
                                 //L'expéditeur du message est un serveur
                                 analyzeMessageSentByServer(msg, userSocket);
@@ -395,7 +395,6 @@ public class Server {
                         }
                     }
                 } catch (SocketException ex) {
-                    //System.out.println("Socket Exception");
                     if (socketBack.equals(userSocket)) {
                         //panne du serveur de derriere
                         try {
@@ -421,7 +420,6 @@ public class Server {
                         }
                     }
                 }catch(EOFException eo){
-                    //System.out.println("EOF exception");
                     String lastPseudo = usersSocket.get(userSocket);
                     if (lastPseudo != null) {
                         try {
@@ -793,17 +791,12 @@ public class Server {
                 //le joueur1 est tombé en panne pendant la partie
                 changeUserStatus(game.getUser2().getPseudo(), Status.PLAYING, Status.CONNECTED);
                 usersDisconnectedTable.remove(game.getUser1().getPseudo());
-                //envoyer le menu au client qui reste
-                //sendMessage(getMenuUser(), game.getUser2().getSocketOout());
             } else if(game.getUser2().getStatus() == Status.DISCONNECTED) {
                 //le joueur2 est tombé en panne
             }else{
                     //les deux joueurs n'ont pas quitté la partie
                     changeUserStatus(game.getUser1().getPseudo(), Status.PLAYING, Status.CONNECTED);
                     changeUserStatus(game.getUser2().getPseudo(), Status.PLAYING, Status.CONNECTED);
-                    //envoyer le menu aux clients
-                    //sendMessage(getMenuUser(), game.getUser1().getSocketOout());
-                    //sendMessage(getMenuUser(), game.getUser2().getSocketOout());
             }
         }
 
@@ -1295,21 +1288,6 @@ public class Server {
                     questionQuiz.getValue("response" + Integer.toString(numeroquestion))));
         }
     }
-
-/*    *
-     * Renvoie le menu disponible pour l'utilisateur
-     *
-     * @return chaîne de caractères
-
-    private String getMenuUser() {
-        String res = "getMenu";
-        res = "============================" + "\n";
-        res += "| Options:                 |" + "\n";
-        res += "|        play              |" + "\n";
-        res += "|        quit              |" + "\n";
-        res += "============================";
-        return res;
-    }*/
 
     /************************************************GESTION DE L'AFFICHAGE***************************************/
 
