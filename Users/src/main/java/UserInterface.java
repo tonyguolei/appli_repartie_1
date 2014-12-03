@@ -542,11 +542,8 @@ public class UserInterface extends JFrame {
                         bar.setForeground(Color.ORANGE);
                     else
                         bar.setForeground(Color.RED);
-
-
                 }
             }catch (Exception e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
 
             }

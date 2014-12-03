@@ -797,7 +797,6 @@ public class Server {
                 //sendMessage(getMenuUser(), game.getUser2().getSocketOout());
             } else if(game.getUser2().getStatus() == Status.DISCONNECTED) {
                 //le joueur2 est tombé en panne
-                //TODO joueur2 tombé en panne
             }else{
                     //les deux joueurs n'ont pas quitté la partie
                     changeUserStatus(game.getUser1().getPseudo(), Status.PLAYING, Status.CONNECTED);
