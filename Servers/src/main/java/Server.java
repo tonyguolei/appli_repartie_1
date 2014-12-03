@@ -117,6 +117,7 @@ public class Server {
      */
     private void updateServerRessurect() {
         try {
+            System.out.println("==> Debut mis a jour de mon voisin ressuscite ");
             sleep(30000);
             sendMessageNextServer("UPDATE:::");
             sendMessageNextServer((String[]) serverMaster);
@@ -125,6 +126,8 @@ public class Server {
             sendMessageNextServer((Hashtable<String, User>) usersPlayingTable);
             sendMessageNextServer((Hashtable<String, User>) usersDisconnectedTable);
             sendMessageNextServer((Hashtable<String, Game>) gamesTable);
+            System.out.println("Fin mis a jour de mon voisin ressuscite");
+
         } catch (Exception e) {
             System.out.println("Echec de mise a jour du serveur ressuscité");
         }
@@ -382,15 +385,8 @@ public class Server {
                                 handleMsgUpdateServer(oin);
                             } else if (source.equals("GAME")) {
                                 //Mise a jour d'une partie transmis par le serveur master
-                                Object o = null;
-                                try{
-                                    o = oin.readObject();
-                                    Game g = (Game) o;
-                                    handleMsgGameServer(g);
-                                }catch(Exception e){
-                                    e.printStackTrace();
-                                    System.out.println(o.toString());
-                                }
+                                Game g = (Game)oin.readObject();
+                                handleMsgGameServer(g);
                             } else {
                                 System.out.println("Erreur : Message de type inconnu");
                             }
@@ -822,6 +818,8 @@ public class Server {
 
         //Envoyer a mon voisin le message recu
         sendMessageNextServer("GAME:::");
+
+        System.out.println("Objet Game: " + gameTmp);
         sendMessageNextServer(gameTmp);
 
         if (game.getUserPlaying() == null) {
