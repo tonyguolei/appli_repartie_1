@@ -284,8 +284,8 @@ public class Server {
                     neighborServerFrontMe = whoIsMyNeighbor(sId);
                     neighborServerBehindMe = whoIsMyNeighborBehindMe(sId);
                     if (init && !resurrect) {
-                        sleep(30000 - 5000 * sId);
                         System.out.println("=> Attente démarrage du serveur : (Id=" + neighborServerFrontMe[0] + ")");
+                        sleep(30000 - 5000 * sId);
                     }
                     ServerNeighbor();
                 } catch (Exception e) {
@@ -446,7 +446,7 @@ public class Server {
         User userDead = findUserFromTable(client, usersConnectedTable);
         if (userDead != null) {
             System.out.println("[Master : Client " + client + " connecté est tombé en panne]");
-            usersConnectedTable.remove(userDead);
+            usersConnectedTable.remove(userDead.getPseudo());
         } else if (userWaiting != null && userWaiting.getPseudo().equals(client)) {
             System.out.println("[Master : Client " + client + " en attente est tombé en panne]");
             userWaiting = null;

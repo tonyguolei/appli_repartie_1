@@ -191,6 +191,7 @@ public class UserInterface extends JFrame {
                         client.configureServer(1);
                         client.connectServer(client.addressServer, client.portServer);
                         setEnableBtnJeu();
+                        setBtnQuestionDisable();
                     }
                 }catch (Exception err){
                     System.out.println("Annulation de connexion");
@@ -322,7 +323,7 @@ public class UserInterface extends JFrame {
 
     public void setQuesChoice(Game game, int numeroQuestion) {
 
-
+        setBtnQuestionEnable();
         String questions= game.getQuestionsUserPlaying().get(numeroQuestion).getContenuQuestion();
         String[] question = questions.split("\n");
         this.quesChoiceOne.setText(question[1]);
@@ -533,7 +534,7 @@ public class UserInterface extends JFrame {
                     }
 
 
-                    t.sleep(100);
+                    t.sleep(200);
 
                     if (bar.getPercentComplete()<0.3)
                         bar.setForeground(Color.GREEN);
