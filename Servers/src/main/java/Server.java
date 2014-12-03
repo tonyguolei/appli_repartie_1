@@ -746,14 +746,14 @@ public class Server {
                 }
                 System.out.println("[Master : La partie entre " + game.getUser1().getPseudo() +
                         " et " + game.getUser2().getPseudo() + " est terminée]");
-                //TODO Envoyer message score à client 1
+
+                sendMessage("SCORE", game.getUser1().getSocketOout());
+
                 game.getUser1().setGameKey("");
                 game.getUser2().setGameKey("");
                 game.setUserPlaying(null);
                 changeUserStatus(game.getUser1().getPseudo(), Status.PLAYING, Status.CONNECTED);
                 usersDisconnectedTable.remove(game.getUser2().getPseudo());
-                //envoyer le menu au client1 qui reste
-                //sendMessage(getMenuUser(), game.getUser1().getSocketOout());
             }
         } else {
             //si le deuxieme client a fini sa partie, le jeu est terminé
@@ -766,23 +766,17 @@ public class Server {
                 if (game.getUser1().getStatus() != Status.DISCONNECTED) {
                     sendMessage("Gagné ! Vous avez battu votre adversaire !!!", game.getUser1().getSocketOout());
                 }
-                //if (game.getUser2().getStatus() != Status.DISCONNECTED) {
                 sendMessage("Perdu ... Votre adversaire vous a battu", game.getUser2().getSocketOout());
-                //}
             } else if (game.getScoreUser1() < game.getScoreUser2()) {
                 if (game.getUser1().getStatus() != Status.DISCONNECTED) {
                     sendMessage("Perdu ... Votre adversaire vous a battu!", game.getUser1().getSocketOout());
                 }
-                //if (game.getUser2().getStatus() != Status.DISCONNECTED) {
                 sendMessage("Gagné ! Vous avez battu votre adversaire !!!", game.getUser2().getSocketOout());
-                //}
             } else {
                 if (game.getUser1().getStatus() != Status.DISCONNECTED) {
                     sendMessage("Egalite = Match nul !!!", game.getUser1().getSocketOout());
                 }
-                //if (game.getUser2().getStatus() != Status.DISCONNECTED) {
                 sendMessage("Egalite = Match nul !!!", game.getUser2().getSocketOout());
-                //}
             }
 
             System.out.println("[Master : La partie entre " + game.getUser1().getPseudo() +
@@ -1113,8 +1107,6 @@ public class Server {
                     usersDisconnectedTable.remove(u1.getPseudo());
                 }else{
                     changeUserStatus(u1.getPseudo(), Status.PLAYING, Status.CONNECTED);
-                    //envoyer le menu a l'utilisater encore vivant
-                    //sendMessage(getMenuUser(), u1.getSocketOout());
                 }
                 usersDisconnectedTable.remove(u2.getPseudo());
             } else if (uMain.equals(u2) && u1.equals(userDead)) {
