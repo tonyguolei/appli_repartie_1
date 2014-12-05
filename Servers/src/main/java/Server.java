@@ -637,7 +637,9 @@ public class Server {
                 sendMessage("Pour jouer, cliquez sur \nle boutton jouer\n", oout);
             } else {
                 // le client n'a pas fini sa precedente partie
-                //on l'enlève de la liste
+
+                manageLastGame(gameReconnexion,client,oout);
+                /*
                 gamesUnfinishedTable.remove(gameReconnexion.getGameKey());
                 if (gameReconnexion.getUser1().getPseudo().equals(client)) {
                     if (gameReconnexion.getScoreUser1() > gameReconnexion.getScoreUser2()) {
@@ -656,7 +658,7 @@ public class Server {
                     } else {
                         sendMessage("Résultat de la dernière partie \nEgalite = Match nul !!!" + "\nPour jouer, cliquez sur \nle boutton jouer\n", oout);
                     }
-                }
+                }*/
             }
         }
     }
@@ -769,39 +771,40 @@ public class Server {
                 sendMessage(game, game.getUser2().getSocketOout());
             } else {
                 //client2 s'est déconnecté entre temps =>fin de partie
+                System.out.println("[Master : La partie entre " + game.getUser1().getPseudo() +
+                        " et " + game.getUser2().getPseudo() + " est terminée]");
 
                 //reconnexion -> on ajoute l'user dans la table gameUnfinishedTable avec clé son nom
-                Game newG = new Game(game.getUser1(),game.getUser2());
+                /*Game newG = new Game(game.getUser1(),game.getUser2());
                 newG.setScoreUser1(game.getScoreUser1());
                 newG.setScoreUser2(game.getScoreUser2());
                 newG.setGameKey(newG.getUser2().getPseudo());
-                addUnfinishedGame(newG.getUser2().getPseudo(), newG);
+                addUnfinishedGame(newG.getUser2().getPseudo(), newG);*/
+                keepGame(game,2);
 
                 if (game.getScoreUser1() > game.getScoreUser2()) {
                     sendMessage("Gagné ! Vous avez battu votre adversaire !!!", game.getUser1().getSocketOout());
                 } else {
                     sendMessage("Egalite = Match nul !!!", game.getUser1().getSocketOout());
                 }
-                System.out.println("[Master : La partie entre " + game.getUser1().getPseudo() +
-                        " et " + game.getUser2().getPseudo() + " est terminée]");
-
-                sendMessage("SCORE", game.getUser1().getSocketOout());
                 game.getUser1().setGameKey("");
                 game.getUser2().setGameKey("");
                 game.setUserPlaying(null);
                 changeUserStatus(game.getUser1().getPseudo(), Status.PLAYING, Status.CONNECTED);
                 usersDisconnectedTable.remove(game.getUser2().getPseudo());
+                sendMessage("SCORE", game.getUser1().getSocketOout());
             }
         } else {
             //si le deuxieme client a fini sa partie, le jeu est terminé
             if (game.getUser1().getStatus() != Status.DISCONNECTED) {
                 sendMessage("SCORE", game.getUser1().getSocketOout());
             } else {
-                Game newG = new Game(game.getUser1(),game.getUser2());
+                /*Game newG = new Game(game.getUser1(),game.getUser2());
                 newG.setScoreUser1(game.getScoreUser1());
                 newG.setScoreUser2(game.getScoreUser2());
                 newG.setGameKey(newG.getUser1().getPseudo());
-                addUnfinishedGame(newG.getUser1().getPseudo(), newG);
+                addUnfinishedGame(newG.getUser1().getPseudo(), newG);*/
+                keepGame(game,1);
             }
             sendMessage("SCORE", game.getUser2().getSocketOout());
 
@@ -982,20 +985,29 @@ public class Server {
                         System.out.println("[La partie entre " + g.getUser1().getPseudo()
                                 + " et " + g.getUser2().getPseudo() + " est terminée]");
 
-                        //reconnexion -> on ajoute l'user dans la table gameUnfinishedTable avec clé son nom
-                        Game newG = new Game(g.getUser1(),g.getUser2());
-                        newG.setScoreUser1(g.getScoreUser1());
-                        newG.setScoreUser2(g.getScoreUser2());
-                        newG.setGameKey(newG.getUser2().getPseudo());
-                        addUnfinishedGame(newG.getUser2().getPseudo(), newG);
-
                         g.setScoreUser2(0);
                         g.setScoreUserPlaying(0);
                         g.setUserPlaying(null);
                         //Mettre a jour le statut de l'utilisateur
                         u1.setGameKey("");
                         u2.setGameKey("");
+
+                        /*Game newG2 = new Game(g.getUser1(),g.getUser2());
+                        newG2.setScoreUser1(g.getScoreUser1());
+                        newG2.setScoreUser2(g.getScoreUser2());
+                        newG2.setGameKey(newG2.getUser2().getPseudo());
+                        addUnfinishedGame(newG2.getUser2().getPseudo(), newG2);*/
+                        keepGame(g,2);
+
                         if (u1.getStatus() == Status.DISCONNECTED) {
+                            //reconnexion -> on ajoute l'user dans la table gameUnfinishedTable avec clé son nom
+                            /*Game newG = new Game(g.getUser1(),g.getUser2());
+                            newG.setScoreUser1(g.getScoreUser1());
+                            newG.setScoreUser2(g.getScoreUser2());
+                            newG.setGameKey(newG.getUser1().getPseudo());
+                            addUnfinishedGame(newG.getUser1().getPseudo(), newG);*/
+                            keepGame(g,1);
+
                             //utilisateur 1 déja déconnecté
                             usersDisconnectedTable.remove(u1.getPseudo());
                         } else {
@@ -1071,18 +1083,23 @@ public class Server {
                     "" + game.getUser2().getPseudo() + " est terminée ]");
 
             //reconnexion ->client
-            if (game.getUser1().getStatus() == Status.DISCONNECTED && game.getUser2().getStatus() == Status.CONNECTED) {
-                Game newG = new Game(game.getUser1(),game.getUser2());
+            if (game.getUser1().getStatus() == Status.DISCONNECTED
+                    && game.getUser2().getStatus() == Status.CONNECTED) {
+                /*Game newG = new Game(game.getUser1(),game.getUser2());
                 newG.setScoreUser1(game.getScoreUser1());
                 newG.setScoreUser2(game.getScoreUser2());
                 newG.setGameKey(newG.getUser1().getPseudo());
-                addUnfinishedGame(newG.getUser1().getPseudo(), newG);
-            } else if (game.getUser2().getStatus() == Status.DISCONNECTED && game.getUser1().getStatus() == Status.CONNECTED) {
-                Game newG = new Game(game.getUser1(),game.getUser2());
+                addUnfinishedGame(newG.getUser1().getPseudo(), newG);*/
+                //System.out.println("ici");
+                keepGame(game,1);
+            } else if (game.getUser2().getStatus() == Status.DISCONNECTED
+                    && game.getUser1().getStatus() == Status.CONNECTED) {
+                /*Game newG = new Game(game.getUser1(),game.getUser2());
                 newG.setScoreUser1(game.getScoreUser1());
                 newG.setScoreUser2(game.getScoreUser2());
                 newG.setGameKey(newG.getUser2().getPseudo());
-                addUnfinishedGame(newG.getUser2().getPseudo(), newG);
+                addUnfinishedGame(newG.getUser2().getPseudo(), newG);*/
+                keepGame(game,2);
             }
             endGameNotMaster(myGame);
         }
@@ -1151,20 +1168,29 @@ public class Server {
                 g.setScoreUserPlaying(0);
                 g.setUserPlaying(null);
 
+                /*Game newG = new Game(g.getUser1(),g.getUser2());
+                newG.setScoreUser1(g.getScoreUser1());
+                newG.setScoreUser2(g.getScoreUser2());
+                newG.setGameKey(newG.getUser2().getPseudo());
+                addUnfinishedGame(newG.getUser2().getPseudo(), newG);*/
+                keepGame(g,2);
+
                 //comparer les scores et envoyer le résultat
                 if (u1.getStatus() != Status.DISCONNECTED) {
                     //reconnexion deploquer l'autre joueur
                     sendMessage("SCORE", u1.getSocketOout());
-                    Game newG = new Game(g.getUser1(),g.getUser2());
-                    newG.setScoreUser1(g.getScoreUser1());
-                    newG.setScoreUser2(g.getScoreUser2());
-                    newG.setGameKey(newG.getUser2().getPseudo());
-                    addUnfinishedGame(newG.getUser2().getPseudo(), newG);
                     if (g.getScoreUser1() > 0) {
                         sendMessage("Gagné ! Vous avez battu votre adversaire !!!", u1.getSocketOout());
                     } else {
                         sendMessage("Egalite = Match nul !!!", u1.getSocketOout());
                     }
+                }else{
+                    /*Game newG2 = new Game(g.getUser1(),g.getUser2());
+                    newG2.setScoreUser1(g.getScoreUser1());
+                    newG2.setScoreUser2(g.getScoreUser2());
+                    newG2.setGameKey(newG2.getUser1().getPseudo());
+                    addUnfinishedGame(newG2.getUser1().getPseudo(), newG2);*/
+                    keepGame(g,1);
                 }
 
                 //Mettre a jour le statut de l'utilisateur
@@ -1183,6 +1209,62 @@ public class Server {
             } else if (uMain.equals(u2) && u1.equals(userDead)) {
                 //le deuxieme joueur est vivant et est en train de jouer
                 //le premier joueur qui a déjà joué vient de se déconnecter
+            }
+        }
+    }
+
+    /**
+     * Conserver le jeu pour le joueur qui est tombé en panne ou déconnecté
+     * @param g
+     * @param numUser
+     */
+    private void keepGame(Game g,int numUser){
+        Game newG = new Game(g.getUser1(),g.getUser2());
+        newG.setScoreUser1(g.getScoreUser1());
+        newG.setScoreUser2(g.getScoreUser2());
+
+        if(numUser == 1){
+            newG.setGameKey(newG.getUser1().getPseudo());
+        }else{
+            newG.setGameKey(newG.getUser2().getPseudo());
+        }
+        addUnfinishedGame(newG.getGameKey(), newG);
+    }
+
+    /**
+     * Gere la precedent partie du client et lui affiche le message
+     * @param g
+     * @param client
+     * @param oout
+     * @throws IOException
+     */
+    private void manageLastGame(Game g,String client,ObjectOutputStream oout) throws IOException {
+        gamesUnfinishedTable.remove(g.getGameKey());
+        if (g.getUser1().getPseudo().equals(client)) {
+            if (g.getScoreUser1() > g.getScoreUser2()) {
+                sendMessage(" Résultat de la dernière partie \n Gagné ! " +
+                        "Vous avez battu votre adversaire : " + g.getUser2().getPseudo()
+                        + "\nPour jouer, cliquez sur \nle boutton jouer\n", oout);
+            } else if (g.getScoreUser1() < g.getScoreUser2()) {
+                sendMessage(" Résultat de la dernière partie \nPerdu ... " +
+                        "Votre adversaire : " + g.getUser2().getPseudo() +
+                        " vous a battu!" + "\nPour jouer, cliquez sur \nle boutton jouer\n", oout);
+            } else {
+                sendMessage(" Résultat de la dernière partie \nEgalite = Match nul !!!"
+                        + "\nPour jouer, cliquez sur \nle boutton jouer\n", oout);
+            }
+        } else {
+            if (g.getScoreUser1() < g.getScoreUser2()) {
+                sendMessage(" Résultat de la dernière partie \nGagné ! " +
+                        "Vous avez battu votre adversaire : " + g.getUser1().getPseudo()
+                        + "\nPour jouer, cliquez sur \nle boutton jouer\n", oout);
+            } else if (g.getScoreUser1() > g.getScoreUser2()) {
+                sendMessage("Résultat de la dernière partie \nPerdu ... " +
+                        "Votre adversaire : " + g.getUser1().getPseudo()
+                        + " vous a battu!" + "\nPour jouer, cliquez sur \nle boutton jouer\n", oout);
+            } else {
+                sendMessage("Résultat de la dernière partie \nEgalite = Match nul !!!"
+                        + "\nPour jouer, cliquez sur \nle boutton jouer\n", oout);
             }
         }
     }
