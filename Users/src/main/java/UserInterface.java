@@ -1,6 +1,7 @@
 /**
  * Created by edah on 30/11/14.
  */
+
 import javax.swing.*;
 import java.awt.Color;
 import java.awt.SystemColor;
@@ -13,7 +14,7 @@ public class UserInterface extends JFrame {
     /* Gestion du timer et du progressBar */
     private JProgressBar bar;
     private Thread t;
-    private Traitement progressBar ;
+    private Traitement progressBar;
 
 
     /* Les objets SWING */
@@ -24,7 +25,7 @@ public class UserInterface extends JFrame {
     private JButton quesChoiceThree;
     private JButton quesChoiceFour;
 
-    private  JButton respOne;
+    private JButton respOne;
     private JButton respTwo;
     private JButton respThree;
 
@@ -36,11 +37,10 @@ public class UserInterface extends JFrame {
     private JLabel reseau;
     private JLabel numeroQuestionLabel;
 
-    private String userName ;
+    private String userName;
     private String play;
 
-    private Client client ;
-
+    private Client client;
 
 
     public String getPlay() {
@@ -62,18 +62,19 @@ public class UserInterface extends JFrame {
 
     /**
      * Constructeur , prend en argument l'objet Client contenant les infos sur le client connecté
+     *
      * @param client
      */
-    public UserInterface(final Client client){
+    public UserInterface(final Client client) {
         this.client = client;
         this.setTitle("Jeu “SQuizzez-moi”");
         this.setResizable(false);
-        this.setSize(320,460);
+        this.setSize(320, 460);
         this.setLocationRelativeTo(null);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setLayout(null);
         panel = new JPanel();
-        panel.setBackground(Color.blue);
+        panel.setBackground(Color.gray);
         panel.setForeground(Color.BLUE);
         panel.setBounds(0, 0, 320, 450);
         getContentPane().add(panel);
@@ -86,38 +87,46 @@ public class UserInterface extends JFrame {
         question.setText("");
         panel.add(question);
 
+        Font fontquestion = new Font("Arial", Font.ITALIC, 10);
+
         quesChoiceTwo = new JButton(" ");
         quesChoiceTwo.setForeground(Color.WHITE);
         quesChoiceTwo.setBackground(Color.BLACK);
         quesChoiceTwo.setBounds(160, 238, 150, 70);
+        quesChoiceTwo.setFont(fontquestion);
 
         panel.add(quesChoiceTwo);
         quesChoiceOne = new JButton(" ");
         quesChoiceOne.setForeground(Color.WHITE);
         quesChoiceOne.setBackground(Color.BLACK);
         quesChoiceOne.setBounds(7, 238, 150, 70);
+        quesChoiceOne.setFont(fontquestion);
+
 
         panel.add(quesChoiceOne);
         quesChoiceThree = new JButton(" ");
         quesChoiceThree.setForeground(Color.WHITE);
         quesChoiceThree.setBackground(Color.BLACK);
         quesChoiceThree.setBounds(7, 332, 150, 70);
+        quesChoiceThree.setFont(fontquestion);
+
 
         panel.add(quesChoiceThree);
         quesChoiceFour = new JButton(" ");
         quesChoiceFour.setForeground(Color.WHITE);
         quesChoiceFour.setBackground(Color.BLACK);
         quesChoiceFour.setBounds(160, 332, 150, 70);
+        quesChoiceFour.setFont(fontquestion);
+
         panel.add(quesChoiceFour);
 
+
         users = new JLabel();
-        Font fontusers = new Font("Arial",Font.BOLD,12);
+        Font fontusers = new Font("Arial", Font.BOLD, 12);
         users.setFont(fontusers);
         users.setForeground(Color.WHITE);
         users.setBounds(100, 60, 160, 50);
         panel.add(users);
-
-
 
 
         respOne = new JButton("");
@@ -155,11 +164,11 @@ public class UserInterface extends JFrame {
         reseau.setVisible(false);
         panel.add(reseau);
 
-        numeroQuestionLabel= new JLabel(" ");
+        numeroQuestionLabel = new JLabel(" ");
         numeroQuestionLabel.setForeground(Color.white);
-        Font font = new Font("Arial",Font.BOLD,20);
+        Font font = new Font("Arial", Font.BOLD, 20);
         numeroQuestionLabel.setFont(font);
-        numeroQuestionLabel.setBounds(250, 55 , 100, 20);
+        numeroQuestionLabel.setBounds(250, 55, 100, 20);
         numeroQuestionLabel.setVisible(true);
         panel.add(numeroQuestionLabel);
 
@@ -180,11 +189,11 @@ public class UserInterface extends JFrame {
 
                 JOptionPane jop = new JOptionPane();
                 String username = "";
-                try{
-                    username = JOptionPane.showInputDialog(null, "Votre pseudo", "Connexion" ,JOptionPane.QUESTION_MESSAGE);
-                    if(username.equals("")){
+                try {
+                    username = JOptionPane.showInputDialog(null, "Votre pseudo", "Connexion", JOptionPane.QUESTION_MESSAGE);
+                    if (username.equals("")) {
                         JOptionPane.showMessageDialog(null, "Votre pseudo", "Pseudo incorrect", JOptionPane.ERROR_MESSAGE);
-                    }else{
+                    } else {
                         setUserName(username);
                         setVisibilityDeConnect();
                         client.setPseudo(getUserName());
@@ -192,8 +201,9 @@ public class UserInterface extends JFrame {
                         client.connectServer(client.addressServer, client.portServer);
                         setEnableBtnJeu();
                         setBtnQuestionDisable();
+                        client.gui.setTitle(client.gui.getTitle() + " - " + getUserName());
                     }
-                }catch (Exception err){
+                } catch (Exception err) {
                     System.out.println("Annulation de connexion");
                 }
 
@@ -207,9 +217,9 @@ public class UserInterface extends JFrame {
         btnSeDeconnecter.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 //demande de deconnexion volontaire
-                try{
+                try {
                     client.handleMsgSendToServer("quit");
-                }catch (Exception ee) {
+                } catch (Exception ee) {
                     ee.printStackTrace();
                 }
 
@@ -221,12 +231,12 @@ public class UserInterface extends JFrame {
         btnJouer.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
 
-                try{
+                try {
                     client.handleMsgSendToServer("play");
                     setDisableBtnJeu();
                     initializeGui();
 
-                }catch (Exception ee) {
+                } catch (Exception ee) {
                     ee.printStackTrace();
                 }
 
@@ -242,12 +252,12 @@ public class UserInterface extends JFrame {
 
                 setBtnQuestionDisable();
 
-                try{
+                try {
                     setInvisibilityBar(false);
                     client.handleMsgSendToServer(getResponse(quesChoiceOne.getText()));
 
                     t = null;
-                }catch (Exception ee) {
+                } catch (Exception ee) {
                     ee.printStackTrace();
                 }
             }
@@ -256,11 +266,11 @@ public class UserInterface extends JFrame {
             public void actionPerformed(ActionEvent arg0) {
                 setBtnQuestionDisable();
 
-                try{
+                try {
                     setInvisibilityBar(false);
                     client.handleMsgSendToServer(getResponse(quesChoiceTwo.getText()));
 
-                }catch (Exception ee) {
+                } catch (Exception ee) {
                     ee.printStackTrace();
                 }
             }
@@ -269,12 +279,12 @@ public class UserInterface extends JFrame {
             public void actionPerformed(ActionEvent arg0) {
                 setBtnQuestionDisable();
 
-                try{
+                try {
                     setInvisibilityBar(false);
                     client.handleMsgSendToServer(getResponse(quesChoiceThree.getText()));
 
 
-                }catch (Exception ee) {
+                } catch (Exception ee) {
                     ee.printStackTrace();
                 }
             }
@@ -283,12 +293,12 @@ public class UserInterface extends JFrame {
             public void actionPerformed(ActionEvent arg0) {
                 setBtnQuestionDisable();
 
-                try{
+                try {
                     setInvisibilityBar(false);
                     client.handleMsgSendToServer(getResponse(quesChoiceFour.getText()));
 
 
-                }catch (Exception ee) {
+                } catch (Exception ee) {
                     ee.printStackTrace();
                 }
             }
@@ -299,7 +309,7 @@ public class UserInterface extends JFrame {
     /**
      * Initialisation des champs et des bouttons
      */
-    public void initializeGui(){
+    public void initializeGui() {
         this.respOne.setBackground(Color.WHITE);
         this.respTwo.setBackground(Color.WHITE);
         this.respThree.setBackground(Color.WHITE);
@@ -317,6 +327,7 @@ public class UserInterface extends JFrame {
 
     /**
      * Affiche les questions et les 4 choix dans les boutons quesCHoiceOne.......
+     *
      * @param game
      * @param numeroQuestion
      */
@@ -324,14 +335,15 @@ public class UserInterface extends JFrame {
     public void setQuesChoice(Game game, int numeroQuestion) {
 
         setBtnQuestionEnable();
-        String questions= game.getQuestionsUserPlaying().get(numeroQuestion).getContenuQuestion();
+
+        String questions = game.getQuestionsUserPlaying().get(numeroQuestion).getContenuQuestion();
         String[] question = questions.split("\n");
         this.quesChoiceOne.setText(question[1]);
         this.quesChoiceTwo.setText(question[2]);
         this.quesChoiceThree.setText(question[3]);
         this.quesChoiceFour.setText(question[4]);
 
-        numeroQuestionLabel.setText(String.valueOf(numeroQuestion+1));
+        numeroQuestionLabel.setText(String.valueOf(numeroQuestion + 1));
         setVisibilityLabelUsers();
         setQuestion(question[0]);
 
@@ -343,6 +355,7 @@ public class UserInterface extends JFrame {
 
     /**
      * Fonction affichant les messages du serveur
+     *
      * @param question
      */
     public void setQuestion(String question) {
@@ -352,28 +365,25 @@ public class UserInterface extends JFrame {
 
     /**
      * Permet d'afficher si la reponse  choisi par le client est correct ou pas
+     *
      * @param resultat
      * @param nbrequestion
      */
-    public void setResp(boolean  resultat, int nbrequestion) {
-        if (resultat){
-            if(nbrequestion == 1){
+    public void setResp(boolean resultat, int nbrequestion) {
+        if (resultat) {
+            if (nbrequestion == 1) {
                 this.respOne.setBackground(Color.green);
-            }
-            else if(nbrequestion == 2){
+            } else if (nbrequestion == 2) {
                 this.respTwo.setBackground(Color.green);
-            }
-            else {
+            } else {
                 this.respThree.setBackground(Color.green);
             }
-        }else {
-            if(nbrequestion == 1){
+        } else {
+            if (nbrequestion == 1) {
                 this.respOne.setBackground(Color.red);
-            }
-            else if(nbrequestion == 2){
+            } else if (nbrequestion == 2) {
                 this.respTwo.setBackground(Color.red);
-            }
-            else {
+            } else {
                 this.respThree.setBackground(Color.red);
             }
         }
@@ -382,11 +392,12 @@ public class UserInterface extends JFrame {
 
     /**
      * Permet de recuperer le numero de la reponse choisi par le client. Ce numeron n'est que le premier element de la reponse
+     *
      * @param response
      * @return
      */
-    public  String getResponse(String response){
-        return  String.valueOf(response.charAt(0));
+    public String getResponse(String response) {
+        return String.valueOf(response.charAt(0));
     }
 
     /**
@@ -399,6 +410,7 @@ public class UserInterface extends JFrame {
         this.quesChoiceFour.setEnabled(false);
 
     }
+
     /**
      * Permet d' activé les boutons  de choix
      */
@@ -440,17 +452,20 @@ public class UserInterface extends JFrame {
     }
 
     public void setBtnJouer(String jouer) {
-        this.btnJouer.setText(jouer);;
+        this.btnJouer.setText(jouer);
+        ;
     }
 
     /**
      * Permet d'afficher le label d'erreur reseau ou pas
+     *
      * @param reseau
      */
-    public void setVisibilityErrorReseau(boolean reseau){
+    public void setVisibilityErrorReseau(boolean reseau) {
         this.reseau.setVisible(reseau);
 
     }
+
     /**
      * Affichage des noms des joueurs en train de jouer
      */
@@ -468,33 +483,36 @@ public class UserInterface extends JFrame {
 
     /**
      * Permet d'afficher la barre de progression ou pas
+     *
      * @param visibility
      */
-    public void setInvisibilityBar(boolean visibility){
-        if (visibility == true){
+    public void setInvisibilityBar(boolean visibility) {
+        if (visibility == true) {
             bar = new JProgressBar();
             bar.setBackground(new Color(240, 248, 255));
             bar.setBounds(21, 410, 255, 14);
             panel.add(bar);
 
             progressBar = new Traitement();
-            t = new Thread( progressBar);
+            t = new Thread(progressBar);
             t.start();
 
-        }else {
+        } else {
             //on supprime la barre et on arrete le temps
             panel.remove(bar);
             progressBar.cancel();
 
         }
     }
+
     /**
      * Afficher une boite lancant le jeu
      */
-    public void confirmPlayGame(){
+    public void confirmPlayGame() {
         JOptionPane jop = new JOptionPane();
         jop.showMessageDialog(null, "A vous de jouer", "Vous avez la main", JOptionPane.INFORMATION_MESSAGE);
     }
+
     /**
      * Traitement du texte a afficher
      */
@@ -502,12 +520,12 @@ public class UserInterface extends JFrame {
         String htmlText = " <HTML><BODY> ";
         String lines[] = texte.split("\n");
 
-        for ( int i = 0, taille = lines.length; i<taille; i++ ){
+        for (int i = 0, taille = lines.length; i < taille; i++) {
             htmlText += lines[i] + " <BR> ";
         }
-        htmlText+= " </BODY></HTML> ";
+        htmlText += " </BODY></HTML> ";
 
-        return  htmlText;
+        return htmlText;
     }
 
 /*
@@ -515,61 +533,57 @@ public class UserInterface extends JFrame {
         UserInterface gui = new UserInterface();
     }*/
 
-    class Traitement implements Runnable{
+    class Traitement implements Runnable {
 
         private volatile boolean cancelled = false;
 
-        public void run(){
+        public void run() {
             try {
 
                 t.sleep(1000);
 
                 bar.setBackground(Color.white);
-                for(int val = 0; val <= 100 && cancelled == false; val++){
-                    if (!reseau.isVisible()){
+                for (int val = 0; val <= 100 && cancelled == false; val++) {
+                    if (!reseau.isVisible()) {
                         bar.setValue(val);
-                    }else{
-                        val=val-1;
+                    } else {
+                        val = val - 1;
 
                     }
 
 
                     t.sleep(200);
 
-                    if (bar.getPercentComplete()<0.3)
+                    if (bar.getPercentComplete() < 0.3)
                         bar.setForeground(Color.GREEN);
-                    else if (bar.getPercentComplete()<0.8)
+                    else if (bar.getPercentComplete() < 0.8)
                         bar.setForeground(Color.ORANGE);
                     else
                         bar.setForeground(Color.RED);
+
+
                 }
-            }catch (Exception e) {
+            } catch (Exception e) {
+                // TODO Auto-generated catch block
                 e.printStackTrace();
 
             }
+            try {
 
-
-
-            try{
-
-                if( cancelled == false) {
+                if (cancelled == false) {
                     System.out.println(" ===> Temps écoulé");
                     setBtnQuestionDisable();
                     client.handleMsgSendToServer(getResponse("5.Faux"));
                 }
 
-            }catch (Exception ee) {
+            } catch (Exception ee) {
                 ee.printStackTrace();
 
             }
-
-
         }
 
-        public void cancel()
-        {
+        public void cancel() {
             cancelled = true;
         }
     }
 }
-

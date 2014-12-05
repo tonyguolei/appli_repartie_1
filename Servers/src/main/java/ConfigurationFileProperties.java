@@ -12,6 +12,7 @@ public class ConfigurationFileProperties {
     private Properties propertie;
     //private FileInputStream inputFile;
     private InputStream inputFile;
+
     /**
      * initialise ConfigurationFileProperties
      */

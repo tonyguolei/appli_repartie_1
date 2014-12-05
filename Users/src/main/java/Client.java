@@ -6,6 +6,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Scanner;
+
 import static java.lang.Thread.sleep;
 
 public class Client {
@@ -36,6 +37,7 @@ public class Client {
      * **********GESTION AUTRES SERVEURS****
      */
     public static HashMap<Integer, String> mapServer = new HashMap<Integer, String>();
+
     static {
         //Initialisation liste serveurs
         saveListServer();
@@ -140,7 +142,7 @@ public class Client {
 
         } catch (IOException ex) {
             System.out.println("Echec de connecter serveur " + sId);
-            sId = (sId + 1)%4;
+            sId = (sId + 1) % 4;
             System.out.println("Essayer de connecter serveur " + sId);
             configureServer(sId);
             connectServer(addressServer, portServer);
@@ -149,7 +151,6 @@ public class Client {
 
     /**
      * Traiter les messages recus
-     *
      */
     public void handleMsgFromServer() {
         String ackServer;
@@ -165,7 +166,7 @@ public class Client {
 
                     game = (Game) oin.readObject();
                     displayQuestion(game, numeroQuestion);
-                } else if(typeMessage.equals("REDIRECTION")) {
+                } else if (typeMessage.equals("REDIRECTION")) {
                     //fermer ancien socket
                     oout.close();
                     oin.close();
@@ -181,14 +182,13 @@ public class Client {
                     //Envoyer le pseudo pour connecter le serveur
                     sendMessage("C:" + this.pseudo + ":CONNECT:", oout);
 
-                }else if(typeMessage.equals("SCORE")){
+                } else if (typeMessage.equals("SCORE")) {
                     gui.setEnableBtnJeu();
-                }else if (typeMessage.equals("RECONNEXION_EFFECTUEE_CONTINUER")){
+                } else if (typeMessage.equals("RECONNEXION_EFFECTUEE_CONTINUER")) {
                     // on active les boutons
                     gui.setBtnQuestionEnable();
                     gui.setVisibilityErrorReseau(false);
-                }
-                else{
+                } else {
                     System.out.println(ackServer);
                     gui.setQuestion(ackServer);
                 }
@@ -203,7 +203,7 @@ public class Client {
                     oin.close();
                     socket.close();
                     System.out.println("Le serveur " + sId + " est tombé en panne");
-                    System.out.println("Merci de patienter pendant la reconnexion au serveur " + (sId + 1)%4 + "...");
+                    System.out.println("Merci de patienter pendant la reconnexion au serveur " + (sId + 1) % 4 + "...");
 
                     // on desactive les boutons
                     gui.setBtnQuestionDisable();
@@ -211,7 +211,7 @@ public class Client {
                     sleep(5000);
 
                     //mettre a jour server master
-                    sId = (sId + 1)%4;
+                    sId = (sId + 1) % 4;
                     configureServer(sId);
 
                     //connecter nouveau serveur master
@@ -249,10 +249,10 @@ public class Client {
             sendMessage("C:" + this.pseudo + ":DISCONNECT:", oout);
             quitVoluntarily = true;
             System.exit(0);
-        }else if(msg.equals("kill")){
+        } else if (msg.equals("kill")) {
             //simuler la panne du client
             System.exit(0);
-        }else if (msg.equals("play")) {
+        } else if (msg.equals("play")) {
             //demande de lancement du jeu
             sendMessage("C:" + this.pseudo + ":PLAY:", oout);
         } else {
@@ -309,13 +309,13 @@ public class Client {
             score++;
 
             //gui
-            gui.setResp(true,numeroQuestion+1);
+            gui.setResp(true, numeroQuestion + 1);
             System.out.println(response);
 
         } else {
             System.out.println("=>Réponse fausse 0");
             System.out.println(response);
-            gui.setResp(false,numeroQuestion+1);
+            gui.setResp(false, numeroQuestion + 1);
         }
     }
 
