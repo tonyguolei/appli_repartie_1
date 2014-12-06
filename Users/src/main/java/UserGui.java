@@ -564,7 +564,6 @@ public class UserGui extends JFrame {
 
                 }
             } catch (Exception e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
 
             }
