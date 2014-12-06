@@ -392,8 +392,14 @@ public class Server {
                                 System.out.println("Erreur : Message de type inconnu");
                             }
                         } catch (OptionalDataException opt) {
-                            System.out.println(" DATA OPTIONAL");
+                            // System.out.println(" DATA OPTIONAL");
+                        }catch (ClassCastException cast){
+                            //  System.out.println(" CAST STRING GAME");
                         }
+                        catch ( StreamCorruptedException stream){
+                            // System.out.println(" STREAM");
+                        }
+
                     }
                 } catch (SocketException ex) {
                     if (socketBack.equals(userSocket)) {

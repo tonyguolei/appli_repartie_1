@@ -5,7 +5,6 @@
 import java.io.*;
 import java.net.Socket;
 import java.util.HashMap;
-import java.util.Scanner;
 
 import static java.lang.Thread.sleep;
 
@@ -21,7 +20,7 @@ public class Client {
     public boolean quitVoluntarily = false;
 
 
-    public static UserInterface gui;
+    public static UserGui gui;
 
     /**
      * **********GESTION COMMUNICATION SERVEUR**************
@@ -186,6 +185,12 @@ public class Client {
                     gui.setEnableBtnJeu();
                 } else if (typeMessage.equals("RECONNEXION_EFFECTUEE_CONTINUER")) {
                     // on active les boutons
+                    // demande d'ajout de seconde supplémentaire -> Lei
+                    try {
+                        sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                     gui.setBtnQuestionEnable();
                     gui.setVisibilityErrorReseau(false);
                 } else {
@@ -367,7 +372,7 @@ public class Client {
 
 
         Client user = new Client();
-        gui = new UserInterface(user);
+        gui = new UserGui(user);
         //user.setPseudo(user.createPseudo());
         //user.configureServer(1);
         //user.connectServer(user.addressServer, user.portServer);

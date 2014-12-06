@@ -9,7 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.Font;
 
-public class UserInterface extends JFrame {
+public class UserGui extends JFrame {
 
     /* Gestion du timer et du progressBar */
     private JProgressBar bar;
@@ -65,7 +65,7 @@ public class UserInterface extends JFrame {
      *
      * @param client
      */
-    public UserInterface(final Client client) {
+    public UserGui(final Client client) {
         this.client = client;
         this.setTitle("Jeu “SQuizzez-moi”");
         this.setResizable(false);
@@ -74,7 +74,7 @@ public class UserInterface extends JFrame {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setLayout(null);
         panel = new JPanel();
-        panel.setBackground(Color.gray);
+        panel.setBackground(Color.PINK);
         panel.setForeground(Color.BLUE);
         panel.setBounds(0, 0, 320, 450);
         getContentPane().add(panel);
