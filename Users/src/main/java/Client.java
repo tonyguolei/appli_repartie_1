@@ -19,7 +19,6 @@ public class Client {
     public int score = 0;
     public boolean quitVoluntarily = false;
 
-
     public static UserGui gui;
 
     /**
@@ -60,11 +59,6 @@ public class Client {
         System.out.println("Pour se connecter, entrez votre pseudo: ");
 
         do {
-            // pseudo = reader.nextLine();
-            // gui
-            //  pseudo = gui.getUserName();
-            // System.out.println(pseudo);
-
             if (getPseudo() == "") {
                 System.out.println("Saisie incorrecte");
             } else {
@@ -135,10 +129,6 @@ public class Client {
                     handleMsgFromServer();
                 }
             }).start();
-            //Traiter les messages envoye au serveur
-            //gui
-            //handleMsgSendToServer();
-
         } catch (IOException ex) {
             System.out.println("Echec de connecter serveur " + sId);
             sId = (sId + 1) % 4;
@@ -160,9 +150,7 @@ public class Client {
                 String typeMessage = SplitServerMessage[0];
                 //si le message est "OBJETGAME", le message suivant contient l'objet Game
                 if (typeMessage.equals("OBJETGAME")) {
-
                     gui.confirmPlayGame();
-
                     game = (Game) oin.readObject();
                     displayQuestion(game, numeroQuestion);
                 } else if (typeMessage.equals("REDIRECTION")) {
@@ -177,10 +165,8 @@ public class Client {
                     socket = new Socket(addressServer, portServer);
                     oout = new ObjectOutputStream(socket.getOutputStream());
                     oin = new ObjectInputStream(socket.getInputStream());
-
                     //Envoyer le pseudo pour connecter le serveur
                     sendMessage("C:" + this.pseudo + ":CONNECT:", oout);
-
                 } else if (typeMessage.equals("SCORE")) {
                     gui.setEnableBtnJeu();
                 } else if (typeMessage.equals("RECONNEXION_EFFECTUEE_CONTINUER")) {
@@ -246,9 +232,6 @@ public class Client {
      * @throws IOException
      */
     public void handleMsgSendToServer(String msg) throws IOException {
-        // while (true) {
-        //Scanner reader = new Scanner(System.in);
-        //String msg = reader.nextLine();
         if (msg.equals("quit")) {
             //demande de deconnexion volontaire
             sendMessage("C:" + this.pseudo + ":DISCONNECT:", oout);
@@ -293,12 +276,9 @@ public class Client {
      * @param numeroQuestion
      */
     public void displayQuestion(Game game, int numeroQuestion) {
-
-
         System.out.println(game.getQuestionsUserPlaying().get(numeroQuestion).getContenuQuestion());
         gui.setQuesChoice(game, numeroQuestion);
         gui.setBtnQuestionEnable();
-
     }
 
     /**
@@ -312,11 +292,9 @@ public class Client {
         if (response.equals(game.getQuestionsUserPlaying().get(numeroQuestion).getResponse())) {
             System.out.println("=>Réponse juste +1");
             score++;
-
             //gui
             gui.setResp(true, numeroQuestion + 1);
             System.out.println(response);
-
         } else {
             System.out.println("=>Réponse fausse 0");
             System.out.println(response);
@@ -369,12 +347,7 @@ public class Client {
     }
 
     public static void main(String[] args) throws Exception {
-
-
         Client user = new Client();
         gui = new UserGui(user);
-        //user.setPseudo(user.createPseudo());
-        //user.configureServer(1);
-        //user.connectServer(user.addressServer, user.portServer);
     }
 }

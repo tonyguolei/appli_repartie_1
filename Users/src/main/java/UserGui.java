@@ -16,7 +16,6 @@ public class UserGui extends JFrame {
     private Thread t;
     private Traitement progressBar;
 
-
     /* Les objets SWING */
     JPanel panel;
     JEditorPane question;
@@ -39,26 +38,39 @@ public class UserGui extends JFrame {
 
     private String userName;
     private String play;
-
     private Client client;
 
-
+    /**
+     * Recuperer le jeu
+     * @return le jeu
+     */
     public String getPlay() {
         return play;
     }
 
+    /**
+     * Modifier le jeu
+     * @param play
+     */
     public void setPlay(String play) {
         this.play = play;
     }
 
+    /**
+     * Recupere le nom du joueur
+     * @return nom
+     */
     public String getUserName() {
         return userName;
     }
 
+    /**
+     * Modifier le nom du joueur
+     * @param userName
+     */
     public void setUserName(String userName) {
         this.userName = userName;
     }
-
 
     /**
      * Constructeur , prend en argument l'objet Client contenant les infos sur le client connecté
@@ -527,11 +539,6 @@ public class UserGui extends JFrame {
 
         return htmlText;
     }
-
-/*
-    public static void main(String[] args){
-        UserInterface gui = new UserInterface();
-    }*/
 
     class Traitement implements Runnable {
 
