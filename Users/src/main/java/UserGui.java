@@ -86,7 +86,7 @@ public class UserGui extends JFrame {
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         getContentPane().setLayout(null);
         panel = new JPanel();
-        panel.setBackground(Color.PINK);
+        panel.setBackground(Color.GRAY);
         panel.setForeground(Color.BLUE);
         panel.setBounds(0, 0, 320, 450);
         getContentPane().add(panel);
