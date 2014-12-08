@@ -171,12 +171,6 @@ public class Client {
                     gui.setEnableBtnJeu();
                 } else if (typeMessage.equals("RECONNEXION_EFFECTUEE_CONTINUER")) {
                     // on active les boutons
-                    // demande d'ajout de seconde supplémentaire -> Lei
-                    try {
-                        sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
                     gui.setBtnQuestionEnable();
                     gui.setVisibilityErrorReseau(false);
                 } else {
